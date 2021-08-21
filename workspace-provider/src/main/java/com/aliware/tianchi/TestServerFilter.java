@@ -1,17 +1,15 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.ProviderInfo;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.rpc.BaseFilter;
-import org.apache.dubbo.rpc.Filter;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
-
+import org.apache.dubbo.common.extension.ExtensionLoader;
+import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
+import org.apache.dubbo.rpc.*;
 import oshi.SystemInfo;
-import oshi.hardware.GlobalMemory;
-import oshi.hardware.HardwareAbstractionLayer;
+
+import java.lang.management.ManagementFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 服务端过滤器
@@ -24,8 +22,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         try {
-            Result result = invoker.invoke(invocation);
-            return result;
+            return invoker.invoke(invocation);
         } catch (Exception e) {
             throw e;
         }
@@ -33,12 +30,14 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        // 获取内存信息样例
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        GlobalMemory memory = hal.getMemory();
-
-        appResponse.setAttachment("TestKey", String.valueOf(memory.getVirtualMemory().getVirtualMax()));
+        ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
+        int currentThreadCount = ManagementFactory.getThreadMXBean().getThreadCount();
+        int maxThreadCount = executor.getMaximumPoolSize();
+        int totalThreadCount = new SystemInfo().getOperatingSystem().getThreadCount();
+        System.out.println("max: " + maxThreadCount + " current: " + currentThreadCount + " available: " + executor.getActiveCount());
+        appResponse.setAttachment(ProviderInfo.THREAD_FACTOR, String.valueOf((double) maxThreadCount / totalThreadCount));
+        appResponse.setAttachment("active", String.valueOf(new SystemInfo().getOperatingSystem().getThreadCount()));
     }
 
     @Override

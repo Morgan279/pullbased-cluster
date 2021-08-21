@@ -1,12 +1,9 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.entity.Supervisor;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.rpc.BaseFilter;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
 
 /**
@@ -19,19 +16,15 @@ import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
 public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        try {
-            Result result = invoker.invoke(invocation);
-            return result;
-        } catch (Exception e) {
-            throw e;
+        //若没有可用的provider 则在选址前拦截请求
+        if (!Supervisor.hasAvailableProvider()) {
+            throw new RpcException("there is no available provider");
         }
-
+        return invoker.invoke(invocation);
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        String value = appResponse.getAttachment("TestKey");
-        System.out.println("TestKey From ClusterFilter, value: " + value);
     }
 
     @Override

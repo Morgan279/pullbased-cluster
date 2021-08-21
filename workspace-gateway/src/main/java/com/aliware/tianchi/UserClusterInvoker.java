@@ -1,9 +1,8 @@
 package com.aliware.tianchi;
 
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
+import com.aliware.tianchi.entity.Supervisor;
+import com.aliware.tianchi.processor.TimeoutProcessor;
+import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
@@ -17,16 +16,22 @@ import java.util.List;
  * 选手需要基于此类实现自己的集群调度算法
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
+
+    private final TimeoutProcessor<T> timeoutProcessor;
+
     public UserClusterInvoker(Directory<T> directory) {
         super(directory);
+        this.timeoutProcessor = new TimeoutProcessor<>();
+        for (Invoker<T> invoker : directory.getAllInvokers()) {
+            Supervisor.registerProvider(invoker.getUrl().getPort());
+        }
     }
+
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
-        return select(loadbalance, invocation, invokers, null).invoke(invocation)
-                .whenCompleteWithContext((r, t) -> {
-                    String value = r.getAttachment("TestKey");
-                    System.out.println("TestKey From ClusterInvoker, value: " + value);
-                });
+        Result result = loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
+        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture());
+        return result;
     }
 }

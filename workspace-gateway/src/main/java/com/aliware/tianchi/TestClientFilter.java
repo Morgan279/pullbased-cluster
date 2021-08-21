@@ -1,13 +1,11 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.ProviderInfo;
+import com.aliware.tianchi.entity.Supervisor;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.rpc.BaseFilter;
-import org.apache.dubbo.rpc.Filter;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.remoting.TimeoutException;
+import org.apache.dubbo.rpc.*;
 
 /**
  * 客户端过滤器（选址后）
@@ -19,23 +17,29 @@ import org.apache.dubbo.rpc.RpcException;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        try {
-            Result result = invoker.invoke(invocation);
-            return result;
-        } catch (Exception e) {
-            throw e;
-        }
-
+        //选址后记录RTT
+        long startTime = System.currentTimeMillis();
+        return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+            if (t == null) {
+                int port = invoker.getUrl().getPort();
+                System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " active: " + r.getAttachment("active"));
+                ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
+                Supervisor.recordLatency(port, System.currentTimeMillis() - startTime);
+            }
+        });
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        String value = appResponse.getAttachment("TestKey");
-        System.out.println("TestKey From Filter, value: " + value);
+        System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(ProviderInfo.THREAD_FACTOR));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-
+        if (t instanceof TimeoutException) {
+            TimeoutException timeoutException = (TimeoutException) t;
+        }
+        System.out.println("TestClientFilter error: " + t.getMessage());
+        //t.printStackTrace();
     }
 }
