@@ -37,22 +37,23 @@ public class UserLoadBalance implements LoadBalance {
 //        double maxWeight = -1;
 //        Invoker<T> selectedInvoker = null;
 //
-//        for(Invoker<T> invoker : invokers){
+//        for (Invoker<T> invoker : invokers) {
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//            if(ProviderStatus.AVAILABLE.equals(virtualProvider.status)){
-//                if(virtualProvider.hasImperium()){
+//            if (Supervisor.isProviderAvailable(virtualProvider)) {
+//                if (virtualProvider.hasImperium()) {
 //                    virtualProvider.executeImperium();
 //                    return invoker;
-//                }else if(virtualProvider.getWeight() > maxWeight){
+//                } else if (virtualProvider.getWeight() > maxWeight) {
 //                    selectedInvoker = invoker;
 //                    maxWeight = virtualProvider.getWeight();
 //                }
 //            }
 //        }
 //
-//        if(selectedInvoker == null){
+//        if (selectedInvoker == null) {
 //            throw new RpcException("there is no available provider");
 //        }
+//
 //        return selectedInvoker;
     }
 

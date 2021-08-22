@@ -8,7 +8,7 @@ import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
 import org.apache.dubbo.rpc.*;
 import oshi.SystemInfo;
 
-import java.lang.management.ManagementFactory;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -19,25 +19,52 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @Activate(group = CommonConstants.PROVIDER)
 public class TestServerFilter implements Filter, BaseFilter.Listener {
+
+    private static final int REQUEST_LIMIT = 5000;
+
+    private static final SystemInfo SYSTEM_INFO;
+
+    private static final int INIT_TOTAL_THREAD_COUNT;
+
+    private static final Semaphore BUCKET;
+
+    static {
+        SYSTEM_INFO = new SystemInfo();
+        INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
+        int physicalProcessorCount = SYSTEM_INFO.getHardware().getProcessor().getPhysicalProcessorCount();
+        BUCKET = new Semaphore(physicalProcessorCount * REQUEST_LIMIT);
+    }
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         try {
+//            if (!BUCKET.tryAcquire()) {
+//                throw new RpcException("work request exceeds limit");
+//            }
+            //BUCKET.acquire();
             return invoker.invoke(invocation);
-        } catch (Exception e) {
-            throw e;
         }
+//        catch (InterruptedException interruptedException) {
+//            Thread.currentThread().interrupt();
+//        }
+        catch (Exception e) {
+            throw e;
+        } finally {
+            //BUCKET.release();
+        }
+//        throw new IllegalStateException("Unexpected exception");
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
-        int currentThreadCount = ManagementFactory.getThreadMXBean().getThreadCount();
         int maxThreadCount = executor.getMaximumPoolSize();
-        int totalThreadCount = new SystemInfo().getOperatingSystem().getThreadCount();
-        System.out.println("max: " + maxThreadCount + " current: " + currentThreadCount + " available: " + executor.getActiveCount());
-        appResponse.setAttachment(ProviderInfo.THREAD_FACTOR, String.valueOf((double) maxThreadCount / totalThreadCount));
-        appResponse.setAttachment("active", String.valueOf(new SystemInfo().getOperatingSystem().getThreadCount()));
+        int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
+        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
+        System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
+        appResponse.setAttachment(ProviderInfo.THREAD_FACTOR, String.valueOf(threadFactor));
+        appResponse.setAttachment("active", String.valueOf(SYSTEM_INFO.getOperatingSystem().getThreadCount()));
     }
 
     @Override

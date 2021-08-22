@@ -4,6 +4,7 @@ import com.aliware.tianchi.constant.ProviderStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +16,7 @@ public class VirtualProvider {
 
     private final int port;
 
-    public ProviderStatus status;
+    private volatile ProviderStatus status;
 
     private final Stack<Long> timeoutStamp;
 
@@ -33,8 +34,25 @@ public class VirtualProvider {
         }
     }
 
+    public void restart() {
+        if (ProviderStatus.AVAILABLE.equals(this.status)) return;
+
+        this.imperium.set(0);
+        this.timeoutStamp.clear();
+        this.status = ProviderStatus.AVAILABLE;
+    }
+
     public boolean hasImperium() {
         return imperium.get() > 0;
+    }
+
+    public void currentLimit() {
+        this.status = ProviderStatus.UNAVAILABLE;
+    }
+
+    private void crush() {
+        this.status = ProviderStatus.UNAVAILABLE;
+        Supervisor.notifyCrash(this.port);
     }
 
     public void executeImperium() {
@@ -53,5 +71,18 @@ public class VirtualProvider {
 
     public int getPort() {
         return this.port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VirtualProvider)) return false;
+        VirtualProvider that = (VirtualProvider) o;
+        return getPort() == that.getPort();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPort());
     }
 }
