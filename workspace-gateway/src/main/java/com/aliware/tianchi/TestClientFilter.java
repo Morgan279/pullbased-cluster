@@ -4,7 +4,6 @@ import com.aliware.tianchi.constant.ProviderInfo;
 import com.aliware.tianchi.entity.Supervisor;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.remoting.TimeoutException;
 import org.apache.dubbo.rpc.*;
 
 /**
@@ -36,10 +35,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        if (t instanceof TimeoutException) {
-            TimeoutException timeoutException = (TimeoutException) t;
+        int port = invoker.getUrl().getPort();
+        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
+            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(invocation.getAttachment("id"));
         }
-        System.out.println("TestClientFilter error: " + t.getMessage());
+        //System.out.println("TestClientFilter error: " + t.getMessage());
         //t.printStackTrace();
     }
 }

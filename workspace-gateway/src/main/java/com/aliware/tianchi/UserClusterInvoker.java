@@ -8,6 +8,7 @@ import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 集群实现
@@ -23,6 +24,9 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
         super(directory);
         this.timeoutProcessor = new TimeoutProcessor<>();
         for (Invoker<T> invoker : directory.getAllInvokers()) {
+//            for (String key : invoker.getUrl().getParameters().keySet()) {
+//                System.out.println("key: " + key + " value: " + invoker.getUrl().getParameter(key));
+//            }
             Supervisor.registerProvider(invoker.getUrl().getPort());
         }
     }
@@ -30,8 +34,11 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
-        Result result = loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
-        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture());
+        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
+        Result result = selectedInvoker.invoke(invocation);
+        String id = UUID.randomUUID().toString();
+        invocation.setAttachment("id", id);
+        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture(), selectedInvoker.getUrl().getPort(), id);
         return result;
     }
 }

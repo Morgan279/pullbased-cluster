@@ -5,12 +5,18 @@ import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
 
+    private final String id;
+
+    private final int port;
+
     private final Future<T> future;
 
     private final long boxingTime;
 
-    public FutureFlow(Future<T> future) {
+    public FutureFlow(Future<T> future, int port, String id) {
         this.future = future;
+        this.port = port;
+        this.id = id;
         this.boxingTime = System.currentTimeMillis();
     }
 
@@ -18,11 +24,19 @@ public class FutureFlow<T> {
         return System.currentTimeMillis() - boxingTime;
     }
 
-    public boolean isDone(){
+    public boolean isDone() {
         return future.isDone();
     }
 
-    public void forceTimeout(){
+    public void forceTimeout() {
         future.cancel(true);
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public int getPort() {
+        return port;
     }
 }
