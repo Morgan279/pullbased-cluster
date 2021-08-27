@@ -1,7 +1,8 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.constant.ProviderInfo;
+import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
+import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -16,28 +17,39 @@ import org.apache.dubbo.rpc.*;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        int port = invoker.getUrl().getPort();
+        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+        if (virtualProvider.currentLimiter.get() < 1) {
+            System.out.println("work request exceeds limit");
+            throw new RpcException("work request exceeds limit");
+        }
+        virtualProvider.currentLimiter.decrementAndGet();
         //选址后记录RTT
         long startTime = System.currentTimeMillis();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+            virtualProvider.currentLimiter.incrementAndGet();
             if (t == null) {
-                int port = invoker.getUrl().getPort();
-                System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " active: " + r.getAttachment("active"));
-                ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
-                Supervisor.recordLatency(port, System.currentTimeMillis() - startTime);
+                System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " weight: " + Supervisor.getVirtualProvider(port).getWeight() + " remain: " + virtualProvider.currentLimiter.get());
+                virtualProvider.recordLatency(System.currentTimeMillis() - startTime);
+                //ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
             }
         });
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(ProviderInfo.THREAD_FACTOR));
+        int port = invoker.getUrl().getPort();
+        Supervisor.getVirtualProvider(port).setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
+        System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(AttachmentKey.THREAD_FACTOR));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         int port = invoker.getUrl().getPort();
         if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
-            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(invocation.getAttachment("id"));
+            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
+        } else if (t.getMessage().contains("thread pool is exhausted")) {
+            Supervisor.getVirtualProvider(port).currentLimiter.set(0);
         }
         //System.out.println("TestClientFilter error: " + t.getMessage());
         //t.printStackTrace();

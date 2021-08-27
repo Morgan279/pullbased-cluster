@@ -1,6 +1,6 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.constant.ProviderInfo;
+import com.aliware.tianchi.constant.AttachmentKey;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.common.extension.ExtensionLoader;
@@ -8,7 +8,6 @@ import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
 import org.apache.dubbo.rpc.*;
 import oshi.SystemInfo;
 
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -20,39 +19,24 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Activate(group = CommonConstants.PROVIDER)
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
-    private static final int REQUEST_LIMIT = 5000;
-
     private static final SystemInfo SYSTEM_INFO;
 
     private static final int INIT_TOTAL_THREAD_COUNT;
 
-    private static final Semaphore BUCKET;
 
     static {
         SYSTEM_INFO = new SystemInfo();
         INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
-        int physicalProcessorCount = SYSTEM_INFO.getHardware().getProcessor().getPhysicalProcessorCount();
-        BUCKET = new Semaphore(physicalProcessorCount * REQUEST_LIMIT);
     }
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         try {
-//            if (!BUCKET.tryAcquire()) {
-//                throw new RpcException("work request exceeds limit");
-//            }
-            //BUCKET.acquire();
             return invoker.invoke(invocation);
         }
-//        catch (InterruptedException interruptedException) {
-//            Thread.currentThread().interrupt();
-//        }
         catch (Exception e) {
             throw e;
-        } finally {
-            //BUCKET.release();
         }
-//        throw new IllegalStateException("Unexpected exception");
     }
 
     @Override
@@ -62,14 +46,13 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         int maxThreadCount = executor.getMaximumPoolSize();
         int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
         double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
-        System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
-        appResponse.setAttachment(ProviderInfo.THREAD_FACTOR, String.valueOf(threadFactor));
-        appResponse.setAttachment("id", invocation.getAttachment("id"));
-        appResponse.setAttachment("active", String.valueOf(SYSTEM_INFO.getOperatingSystem().getThreadCount()));
+        //System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
+        System.out.println(" factor: " + threadFactor);
+        appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
+        appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-
     }
 }

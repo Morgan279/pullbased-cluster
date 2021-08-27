@@ -15,13 +15,12 @@ public class TimeoutProcessor<T> implements Runnable {
 
     public TimeoutProcessor() {
         this.futureFlowQueue = new ConcurrentLinkedQueue<>();
-        Thread thread = new Thread(this);
-        thread.start();
+//        new Thread(this).start();
 //        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
 //        scheduledExecutorService.scheduleAtFixedRate(this, 50, 1, TimeUnit.MILLISECONDS);
     }
 
-    public void addFuture(Future<T> future, int port, String id) {
+    public void addFuture(Future<T> future, int port, long id) {
         futureFlowQueue.offer(new FutureFlow<>(future, port, id));
     }
 

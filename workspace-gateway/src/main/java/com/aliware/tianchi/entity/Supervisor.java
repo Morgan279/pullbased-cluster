@@ -2,6 +2,7 @@ package com.aliware.tianchi.entity;
 
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.common.utils.ConcurrentHashSet;
+import org.apache.dubbo.rpc.Invoker;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,17 +27,16 @@ public class Supervisor {
         return availableVirtualProviders.isEmpty();
     }
 
-    public static void registerProvider(int port) {
-        virtualProviderMap.putIfAbsent(port, new VirtualProvider(port));
+    public static <T> void registerProvider(Invoker<T> invoker) {
+        int port = invoker.getUrl().getPort();
+        System.out.println("register provider, port: " + port);
+        int threads = Integer.parseInt(invoker.getUrl().getParameter("threads", "200"));
+        virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         availableVirtualProviders.add(virtualProviderMap.get(port));
     }
 
     public static VirtualProvider getVirtualProvider(int port) {
         return virtualProviderMap.get(port);
-    }
-
-    public static void recordLatency(int port, long latency) {
-        virtualProviderMap.get(port).recordLatency(latency);
     }
 
     public static boolean isProviderAvailable(VirtualProvider virtualProvider) {

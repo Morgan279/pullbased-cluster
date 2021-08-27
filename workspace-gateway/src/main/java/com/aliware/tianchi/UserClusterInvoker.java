@@ -1,5 +1,6 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.processor.TimeoutProcessor;
 import org.apache.dubbo.rpc.*;
@@ -8,7 +9,7 @@ import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 集群实现
@@ -17,6 +18,9 @@ import java.util.UUID;
  * 选手需要基于此类实现自己的集群调度算法
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
+
+    //为了compare性能 业务情况下应使用UUID
+    private static final AtomicLong counter = new AtomicLong();
 
     private final TimeoutProcessor<T> timeoutProcessor;
 
@@ -27,7 +31,7 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 //            for (String key : invoker.getUrl().getParameters().keySet()) {
 //                System.out.println("key: " + key + " value: " + invoker.getUrl().getParameter(key));
 //            }
-            Supervisor.registerProvider(invoker.getUrl().getPort());
+            Supervisor.registerProvider(invoker);
         }
     }
 
@@ -36,9 +40,9 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
         Result result = selectedInvoker.invoke(invocation);
-        String id = UUID.randomUUID().toString();
-        invocation.setAttachment("id", id);
-        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture(), selectedInvoker.getUrl().getPort(), id);
+        long invokeId = counter.getAndIncrement();
+        invocation.setAttachment(AttachmentKey.INVOKE_ID, String.valueOf(invokeId));
+        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture(), selectedInvoker.getUrl().getPort(), invokeId);
         return result;
     }
 }

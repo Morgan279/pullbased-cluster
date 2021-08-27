@@ -12,11 +12,17 @@ public class VirtualProvider {
 
     private static final int MAX_RT = 5000;
 
+    public final AtomicInteger currentLimiter;
+
+    public int threads;
+
     private final int N = Config.SAMPLING_COUNT;
 
     private final int port;
 
     private volatile ProviderStatus status;
+
+    private volatile double threadFactor;
 
     private final Stack<Long> timeoutStamp;
 
@@ -32,20 +38,27 @@ public class VirtualProvider {
 
     private double currentLambda;
 
-    public Map<String, Long> inferenceRecords = new HashMap<>();
+    public Map<Long, Long> inferenceRecords = new HashMap<>();
 
-    public VirtualProvider(int port) {
+    public VirtualProvider(int port, int threads) {
         this.port = port;
+        this.threads = threads;
+        this.threadFactor = threads >> 10;
+        this.currentLimiter = new AtomicInteger((int) (threads * 7.2));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
+        this.init();
+    }
+
+    private void init() {
         this.sum = 0;
         this.counter = 0;
         this.initialLambda = 0;
         this.currentLambda = 0.015;
     }
 
-    public void addInference(String id, long retentionTime) {
+    public void addInference(long id, long retentionTime) {
         inferenceRecords.put(id, retentionTime);
     }
 
@@ -74,9 +87,9 @@ public class VirtualProvider {
         imperium.decrementAndGet();
     }
 
-    private Set<String> correctId = new HashSet<>();
+    private Set<Long> correctId = new HashSet<>();
 
-    public synchronized void recordTimeoutRequestId(String id) {
+    public synchronized void recordTimeoutRequestId(long id) {
         if (inferenceRecords.containsKey(id)) correctId.add(id);
         timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(4800L));
 //        System.out.println("time out num: " + timeoutRequests.size() + " correct num: " + correctId.size() + " correct radio: " + ((double) correctId.size() / inferenceRecords.keySet().size()));
@@ -102,7 +115,10 @@ public class VirtualProvider {
     }
 
     public double getWeight() {
-        return 0;
+        double lambdaDiff = currentLambda - initialLambda;
+        double RTWeight = lambdaDiff > 0 ? lambdaDiff * 10 : 1;
+        System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
+        return RTWeight * threadFactor;
     }
 
     public void recordLatency(long latency) {
@@ -130,11 +146,15 @@ public class VirtualProvider {
             initialLambda = value;
         }
         currentLambda = value;
-        System.out.println("currentLambda: " + currentLambda + " initial: " + initialLambda);
+        System.out.println("currentLambda: " + currentLambda + " initial: " + initialLambda + " diff: " + (currentLambda - initialLambda));
     }
 
     public int getPort() {
         return this.port;
+    }
+
+    public void setThreadFactor(double threadFactor) {
+        this.threadFactor = threadFactor;
     }
 
     @Override

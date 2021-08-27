@@ -5,7 +5,7 @@ import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
 
-    private final String id;
+    private final long id;
 
     private final int port;
 
@@ -13,7 +13,7 @@ public class FutureFlow<T> {
 
     private final long boxingTime;
 
-    public FutureFlow(Future<T> future, int port, String id) {
+    public FutureFlow(Future<T> future, int port, long id) {
         this.future = future;
         this.port = port;
         this.id = id;
@@ -32,7 +32,7 @@ public class FutureFlow<T> {
         future.cancel(true);
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 
