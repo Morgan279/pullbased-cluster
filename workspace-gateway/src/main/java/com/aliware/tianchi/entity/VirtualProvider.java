@@ -121,7 +121,7 @@ public class VirtualProvider {
     public double getWeight() {
         double lambdaDiff = currentLambda - initialLambda;
         double RTWeight = lambdaDiff > 0 ? lambdaDiff * 10 : 1;
-        System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
+        //System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
         return RTWeight * threadFactor;
     }
 
@@ -150,7 +150,7 @@ public class VirtualProvider {
             initialLambda = value;
         }
         currentLambda = value;
-        System.out.println("currentLambda: " + currentLambda + " initial: " + initialLambda + " diff: " + (currentLambda - initialLambda));
+        //System.out.println("currentLambda: " + currentLambda + " initial: " + initialLambda + " diff: " + (currentLambda - initialLambda));
     }
 
     public int getPort() {
