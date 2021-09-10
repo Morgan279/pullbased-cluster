@@ -30,7 +30,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             if (t == null) {
                 //System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " weight: " + Supervisor.getVirtualProvider(port).getWeight() + " remain: " + virtualProvider.currentLimiter.get());
                 virtualProvider.recordLatency(System.currentTimeMillis() - startTime);
-                ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
+                //ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
             }
         });
     }

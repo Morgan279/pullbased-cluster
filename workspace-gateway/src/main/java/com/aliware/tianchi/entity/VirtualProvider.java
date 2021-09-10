@@ -130,7 +130,7 @@ public class VirtualProvider {
     }
 
     public void recordLatency(long latency) {
-        for (long i = IMPERIUM_BOUND - latency; i >= 0; --i) {
+        for (long i = (IMPERIUM_BOUND - latency) * 2; i >= 0; --i) {
             imperium.incrementAndGet();
         }
         synchronized (this) {
