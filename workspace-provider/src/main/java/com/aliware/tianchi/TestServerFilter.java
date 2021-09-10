@@ -55,7 +55,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //System.out.println(" factor: " + threadFactor);
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.get()));
         appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
-        //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
+        appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override

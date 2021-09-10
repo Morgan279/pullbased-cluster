@@ -1,11 +1,9 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.processor.TimeoutProcessor;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
@@ -42,9 +40,9 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
         Result result = selectedInvoker.invoke(invocation);
-//        long invokeId = counter.getAndIncrement();
-//        invocation.setAttachment(AttachmentKey.INVOKE_ID, String.valueOf(invokeId));
-//        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture(), selectedInvoker.getUrl().getPort(), invokeId);
+        long invokeId = counter.getAndIncrement();
+        invocation.setAttachment(AttachmentKey.INVOKE_ID, String.valueOf(invokeId));
+        timeoutProcessor.addFuture(RpcContext.getServerContext().getFuture(), selectedInvoker.getUrl().getPort(), invokeId);
         return result;
     }
 }
