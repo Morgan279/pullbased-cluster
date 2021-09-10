@@ -29,8 +29,8 @@ public class Supervisor {
 
     public static <T> void registerProvider(Invoker<T> invoker) {
         int port = invoker.getUrl().getPort();
-        System.out.println("register provider, port: " + port);
         int threads = Integer.parseInt(invoker.getUrl().getParameter("threads", "200"));
+        //System.out.println("register provider, port: " + port + " thread:" + threads);
         virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         availableVirtualProviders.add(virtualProviderMap.get(port));
     }

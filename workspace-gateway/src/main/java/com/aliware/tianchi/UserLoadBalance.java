@@ -24,10 +24,10 @@ public class UserLoadBalance implements LoadBalance {
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
         WorkRequest request;
         if ((request = ProviderRecorder.select()) == null) {
-            LOGGER.info("random select");
+            //LOGGER.info("random select");
             return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
         } else {
-            LOGGER.info("specific select");
+            //LOGGER.info("specific select");
             return invokers.stream()
                     .filter(invoker -> invoker.getUrl().getPort() == request.getPort())
                     .findFirst()
@@ -40,6 +40,7 @@ public class UserLoadBalance implements LoadBalance {
 //        for (Invoker<T> invoker : invokers) {
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
 //            if (Supervisor.isProviderAvailable(virtualProvider)) {
+//                LOGGER.info(invoker.getUrl().getPort() + ": weight: " + virtualProvider.getWeight());
 //                if (virtualProvider.hasImperium()) {
 //                    virtualProvider.executeImperium();
 //                    return invoker;

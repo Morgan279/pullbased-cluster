@@ -43,7 +43,7 @@ public class VirtualProvider {
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
-        this.threadFactor = threads >> 10;
+        this.threadFactor = threads / 10d;
         this.currentLimiter = new AtomicInteger((int) (threads * 7.2));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
@@ -92,17 +92,21 @@ public class VirtualProvider {
     public synchronized void recordTimeoutRequestId(long id) {
         if (inferenceRecords.containsKey(id)) correctId.add(id);
         timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(4800L));
-//        System.out.println("time out num: " + timeoutRequests.size() + " correct num: " + correctId.size() + " correct radio: " + ((double) correctId.size() / inferenceRecords.keySet().size()));
-//        int errorT = 0;
-//        int correctT = 0;
-//        for (String inferenceId : inferenceRecords.keySet()) {
-//            long inferenceTime = inferenceRecords.get(inferenceId);
-//            if (!correctId.contains(inferenceId))
-//                errorT += inferenceTime;
-//            else
-//                correctT += 5000 - inferenceTime;
-//        }
-//        System.out.println("save time: " + (correctT - errorT));
+
+    }
+
+    private void printInferenceProbability() {
+        System.out.println("time out num: " + timeoutRequests.size() + " correct num: " + correctId.size() + " correct radio: " + ((double) correctId.size() / inferenceRecords.keySet().size()));
+        int errorT = 0;
+        int correctT = 0;
+        for (Long inferenceId : inferenceRecords.keySet()) {
+            long inferenceTime = inferenceRecords.get(inferenceId);
+            if (!correctId.contains(inferenceId))
+                errorT += inferenceTime;
+            else
+                correctT += 5000 - inferenceTime;
+        }
+        System.out.println("save time: " + (correctT - errorT));
     }
 
     public double getTimeoutInferenceProbability(long retentionTime) {

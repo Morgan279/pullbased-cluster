@@ -31,12 +31,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        try {
-            return invoker.invoke(invocation);
-        }
-        catch (Exception e) {
-            throw e;
-        }
+        return invoker.invoke(invocation);
     }
 
     @Override
@@ -47,9 +42,9 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
         double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
         //System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
-        System.out.println(" factor: " + threadFactor);
+        //System.out.println(" factor: " + threadFactor);
         appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
-        appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
+        //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override
