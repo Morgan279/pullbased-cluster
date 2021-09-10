@@ -23,18 +23,6 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-//        WorkRequest request;
-//        if ((request = ProviderRecorder.select()) == null) {
-//            //LOGGER.info("random select");
-//            return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-//        } else {
-//            //LOGGER.info("specific select");
-//            return invokers.stream()
-//                    .filter(invoker -> invoker.getUrl().getPort() == request.getPort())
-//                    .findFirst()
-//                    .orElseThrow(() -> new IllegalArgumentException("unknown invoker"));
-//        }
-
         double maxWeight = -1;
         Invoker<T> selectedInvoker = null;
 

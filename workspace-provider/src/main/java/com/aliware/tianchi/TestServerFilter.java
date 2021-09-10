@@ -49,7 +49,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
         //System.out.println(" factor: " + threadFactor);
         appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
-        //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
+        appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override

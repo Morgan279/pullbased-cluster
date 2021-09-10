@@ -45,7 +45,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 15));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -92,7 +92,7 @@ public class VirtualProvider {
 
     public synchronized void recordTimeoutRequestId(long id) {
         if (inferenceRecords.containsKey(id)) correctId.add(id);
-        timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(4800L));
+        timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(5000L));
 
     }
 
@@ -130,7 +130,7 @@ public class VirtualProvider {
     }
 
     public void recordLatency(long latency) {
-        for (long i = (IMPERIUM_BOUND - latency) * 3; i >= 0; --i) {
+        for (long i = (IMPERIUM_BOUND - latency) * 4; i >= 0; --i) {
             imperium.incrementAndGet();
         }
         synchronized (this) {

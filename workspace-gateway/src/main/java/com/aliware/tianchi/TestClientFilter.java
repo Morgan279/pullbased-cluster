@@ -1,5 +1,6 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
@@ -45,11 +46,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         int port = invoker.getUrl().getPort();
-//        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
-//            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
-//        }
-//        else
-        if (t.getMessage().contains("thread pool is exhausted")) {
+        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
+            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
+        } else if (t.getMessage().contains("thread pool is exhausted")) {
             Supervisor.getVirtualProvider(port).currentLimiter.set(0);
         }
         //System.out.println("TestClientFilter error: " + t.getMessage());
