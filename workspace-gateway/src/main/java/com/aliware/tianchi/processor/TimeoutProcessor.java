@@ -15,7 +15,7 @@ public class TimeoutProcessor<T> implements Runnable {
 
     public TimeoutProcessor() {
         this.futureFlowQueue = new ConcurrentLinkedQueue<>();
-        new Thread(this).start();
+//        new Thread(this).start();
 //        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
 //        scheduledExecutorService.scheduleAtFixedRate(this, 50, 1, TimeUnit.MILLISECONDS);
     }

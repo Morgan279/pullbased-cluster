@@ -9,9 +9,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
 
-    private static final int IMPERIUM_BOUND = 5;
+    private static final int IMPERIUM_BOUND = 3;
 
     private static final int MAX_RT = 5000;
+
+    public int currentWeight = 0;
 
     public final AtomicInteger currentLimiter;
 
@@ -24,6 +26,8 @@ public class VirtualProvider {
     private volatile ProviderStatus status;
 
     private volatile double threadFactor;
+
+    private volatile int concurrent;
 
     private final Stack<Long> timeoutStamp;
 
@@ -45,7 +49,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14.67));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -57,6 +61,18 @@ public class VirtualProvider {
         this.counter = 0;
         this.initialLambda = 0;
         this.currentLambda = 0.015;
+    }
+
+    public int getImperium() {
+        return imperium.get();
+    }
+
+    public double getFactor() {
+        return (double) (threads - concurrent) / threads;
+    }
+
+    public int getConcurrent() {
+        return (int) (threads * 14.67) - currentLimiter.get();
     }
 
     public void addInference(long id, long retentionTime) {
@@ -119,18 +135,22 @@ public class VirtualProvider {
         return (double) num / timeoutRequests.size();
     }
 
+    public double getRTWeight() {
+        double lambdaDiff = currentLambda - initialLambda;
+        return lambdaDiff > 0 ? lambdaDiff * 10 : 1;
+    }
 
-    public double getWeight() {
+    public double getWeight(double maxWeight) {
         double lambdaDiff = currentLambda - initialLambda;
         double RTWeight = lambdaDiff > 0 ? lambdaDiff * 10 : 1;
+        System.out.println(port + "'s RT weight : " + RTWeight);
         //System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
-        double weight = RTWeight + ThreadLocalRandom.current().nextDouble(Math.abs(Supervisor.maxWeight - RTWeight) * 1.414);
-        Supervisor.maxWeight = Math.max(Supervisor.maxWeight, weight);
+        double weight = RTWeight + ThreadLocalRandom.current().nextDouble(threads / 2000d + Math.abs(maxWeight - RTWeight)) + (double) threads / (concurrent + 1) / 300;
         return weight;
     }
 
     public void recordLatency(long latency) {
-        for (long i = (IMPERIUM_BOUND - latency) * 4; i >= 0; --i) {
+        for (long i = (IMPERIUM_BOUND - latency) * 2; i >= 0; --i) {
             imperium.incrementAndGet();
         }
         synchronized (this) {
@@ -163,6 +183,10 @@ public class VirtualProvider {
 
     public void setThreadFactor(double threadFactor) {
         this.threadFactor = threadFactor;
+    }
+
+    public void setConcurrent(int concurrent) {
+        this.concurrent = concurrent;
     }
 
     @Override

@@ -6,4 +6,6 @@ public abstract class AttachmentKey {
 
     public static final String INVOKE_ID = "invoke_id";
 
+    public static final String CONCURRENT = "concurrent";
+
 }

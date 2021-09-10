@@ -29,16 +29,19 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.currentLimiter.incrementAndGet();
             if (t == null) {
-                System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " weight: " + Supervisor.getVirtualProvider(port).getWeight() + " remain: " + virtualProvider.currentLimiter.get());
+                //System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " weight: " + Supervisor.getVirtualProvider(port).getWeight() + " remain: " + virtualProvider.currentLimiter.get());
                 virtualProvider.recordLatency(System.currentTimeMillis() - startTime);
-                //ProviderRecorder.recordLatency(port, System.currentTimeMillis() - startTime);
             }
         });
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-//        int port = invoker.getUrl().getPort();
+        int port = invoker.getUrl().getPort();
+        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+        int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
+        virtualProvider.setConcurrent(Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT)));
+        //       System.out.println("concurrent: " + concurrent + "concurrent: " + virtualProvider.getConcurrent());
 //        Supervisor.getVirtualProvider(port).setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
         //System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(AttachmentKey.THREAD_FACTOR));
     }
@@ -46,9 +49,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         int port = invoker.getUrl().getPort();
-        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
-            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
-        } else if (t.getMessage().contains("thread pool is exhausted")) {
+//        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
+//            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
+//        } else
+        if (t.getMessage().contains("thread pool is exhausted")) {
             Supervisor.getVirtualProvider(port).currentLimiter.set(0);
         }
         //System.out.println("TestClientFilter error: " + t.getMessage());

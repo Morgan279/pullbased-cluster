@@ -11,6 +11,7 @@ import org.apache.dubbo.rpc.*;
 import oshi.SystemInfo;
 
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 服务端过滤器
@@ -27,6 +28,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
 
+    private final AtomicInteger concurrent = new AtomicInteger();
 
     static {
         SYSTEM_INFO = new SystemInfo();
@@ -35,24 +37,29 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        concurrent.incrementAndGet();
         return invoker.invoke(invocation);
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
+        concurrent.decrementAndGet();
         ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
         int maxThreadCount = executor.getMaximumPoolSize();
         int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
         double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
-        LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
+        //System.out.println("concurrent: " + concurrent.get());
+        //LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
         //System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
         //System.out.println(" factor: " + threadFactor);
+        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.get()));
         appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
-        appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
+        //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
+        concurrent.decrementAndGet();
     }
 }
