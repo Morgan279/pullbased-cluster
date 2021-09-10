@@ -4,6 +4,7 @@ import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.constant.ProviderStatus;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
@@ -44,7 +45,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 20));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -118,11 +119,14 @@ public class VirtualProvider {
         return (double) num / timeoutRequests.size();
     }
 
+
     public double getWeight() {
         double lambdaDiff = currentLambda - initialLambda;
         double RTWeight = lambdaDiff > 0 ? lambdaDiff * 10 : 1;
         //System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
-        return RTWeight * threadFactor;
+        double weight = RTWeight + ThreadLocalRandom.current().nextDouble(Math.abs(Supervisor.maxWeight - RTWeight) * 1.414);
+        Supervisor.maxWeight = Math.max(Supervisor.maxWeight, weight);
+        return weight;
     }
 
     public void recordLatency(long latency) {
