@@ -32,6 +32,8 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] IWeightArray = {9, 4, 3};
 
+    private final int[] RandomWeightArray = {5, 4, 3};
+
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
         double maxWeight = -1;
@@ -51,6 +53,12 @@ public class UserLoadBalance implements LoadBalance {
         for (int i = 0; i < RTWeightArray.length; ++i) {
             int port = virtualProviderList.get(i).getPort();
             weightMap.put(port, weightMap.get(port) + RTWeightArray[i]);
+        }
+
+        virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getRandomWeight).reversed());
+        for (int i = 0; i < RandomWeightArray.length; ++i) {
+            int port = virtualProviderList.get(i).getPort();
+            weightMap.put(port, weightMap.get(port) + RandomWeightArray[i]);
         }
 
         virtualProviderList.sort(Comparator.comparingInt(VirtualProvider::getImperium).reversed());
