@@ -49,7 +49,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 15));
+        this.currentLimiter = new AtomicInteger((int) (threads * 15.5));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -179,7 +179,7 @@ public class VirtualProvider {
             timeoutStamp.pop();
         }
         timeoutStamp.push(now);
-        if(timeoutStamp.size() >= 50){
+        if(timeoutStamp.size() >= 30){
            this.crush();
         }
     }

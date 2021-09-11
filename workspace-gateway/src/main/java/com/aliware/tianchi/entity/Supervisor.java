@@ -46,7 +46,7 @@ public class Supervisor {
     public static void notifyCrash(int port) {
         VirtualProvider provider = virtualProviderMap.get(port);
         availableVirtualProviders.remove(provider);
-        scheduleRestart(provider, CRASH_RESTART_INTERVAL);
+        scheduleRestart(provider, 100);
     }
 
     public synchronized static void executeCurrentLimit(int port) {
@@ -61,6 +61,6 @@ public class Supervisor {
         scheduledExecutorService.schedule(() -> {
             provider.restart();
             availableVirtualProviders.add(provider);
-        }, restartIntervalSecond, TimeUnit.SECONDS);
+        }, restartIntervalSecond, TimeUnit.MILLISECONDS);
     }
 }
