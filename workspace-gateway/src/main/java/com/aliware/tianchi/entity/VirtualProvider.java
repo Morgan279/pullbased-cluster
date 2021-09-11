@@ -49,7 +49,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 14.67));
+        this.currentLimiter = new AtomicInteger((int) (threads * 13.33));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -84,6 +84,7 @@ public class VirtualProvider {
 
         this.imperium.set(0);
         this.timeoutStamp.clear();
+        this.init();
         this.status = ProviderStatus.AVAILABLE;
     }
 
@@ -109,7 +110,7 @@ public class VirtualProvider {
     public synchronized void recordTimeoutRequestId(long id) {
         if (inferenceRecords.containsKey(id)) correctId.add(id);
         timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(5000L));
-
+        recordTimeout();
     }
 
     private void printInferenceProbability() {
@@ -161,6 +162,17 @@ public class VirtualProvider {
                 sum = 0;
                 counter = 0;
             }
+        }
+    }
+
+    public synchronized void recordTimeout(){
+        long now = System.currentTimeMillis();
+        while (!timeoutStamp.isEmpty() && now - timeoutStamp.peek() > 5){
+            timeoutStamp.pop();
+        }
+        timeoutStamp.push(now);
+        if(timeoutStamp.size() > 9){
+           this.crush();
         }
     }
 

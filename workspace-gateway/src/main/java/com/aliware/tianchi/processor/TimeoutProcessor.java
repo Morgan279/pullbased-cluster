@@ -37,7 +37,7 @@ public class TimeoutProcessor<T> implements Runnable {
 //                    virtualProvider.addInference(futureFlow.getId(), retentionTime);
 //                    futureFlow.forceTimeout();
 //                }
-                if(futureFlow.getRetentionTime() > 4){
+                if(futureFlow.getRetentionTime() > 50){
                     futureFlow.forceTimeout();
                 }
             }

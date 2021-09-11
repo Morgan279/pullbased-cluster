@@ -30,7 +30,7 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] RTWeightArray = {3, 2, 1};
 
-    private final int[] IWeightArray = {4, 1, 1};
+    private final int[] IWeightArray = {9, 4, 3};
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {

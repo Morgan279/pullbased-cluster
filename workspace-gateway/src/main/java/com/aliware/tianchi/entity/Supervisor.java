@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Supervisor {
 
-    private static final int CRASH_RESTART_INTERVAL = 5;
+    private static final int CRASH_RESTART_INTERVAL = 1;
 
     private static final int CURRENT_RESTART_INTERVAL = 1;
 
