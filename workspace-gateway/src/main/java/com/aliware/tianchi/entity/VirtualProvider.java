@@ -171,7 +171,7 @@ public class VirtualProvider {
             timeoutStamp.pop();
         }
         timeoutStamp.push(now);
-        if(timeoutStamp.size() > 9){
+        if(timeoutStamp.size() > 99){
            this.crush();
         }
     }
