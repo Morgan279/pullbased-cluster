@@ -49,7 +49,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
+        this.currentLimiter = new AtomicInteger((int) (threads * 15));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -61,6 +61,10 @@ public class VirtualProvider {
         this.counter = 0;
         this.initialLambda = 0;
         this.currentLambda = 0.015;
+    }
+
+    public double getThreadFactor(){
+        return this.threadFactor;
     }
 
     public double getRandomWeight(){

@@ -28,11 +28,13 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] concurrentWeightArray = {7, 4, 3};
 
-    private final int[] RTWeightArray = {3, 2, 1};
+    private final int[] RTWeightArray = {5, 4, 3};
+
+    private final int[] ThreadWeightArray = {4, 3, 2};
 
     private final int[] IWeightArray = {9, 4, 3};
 
-    private final int[] RandomWeightArray = {5, 4, 3};
+    private final int[] RandomWeightArray = {3, 2, 1};
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -59,6 +61,12 @@ public class UserLoadBalance implements LoadBalance {
         for (int i = 0; i < RandomWeightArray.length; ++i) {
             int port = virtualProviderList.get(i).getPort();
             weightMap.put(port, weightMap.get(port) + RandomWeightArray[i]);
+        }
+
+        virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getThreadFactor).reversed());
+        for (int i = 0; i < ThreadWeightArray.length; ++i) {
+            int port = virtualProviderList.get(i).getPort();
+            weightMap.put(port, weightMap.get(port) + ThreadWeightArray[i]);
         }
 
         virtualProviderList.sort(Comparator.comparingInt(VirtualProvider::getImperium).reversed());
