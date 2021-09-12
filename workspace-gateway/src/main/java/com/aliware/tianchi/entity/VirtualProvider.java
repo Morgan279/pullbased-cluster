@@ -47,7 +47,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 16));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -199,7 +199,7 @@ public class VirtualProvider {
     }
 
     public void setConcurrent(int concurrent) {
-        if (concurrent == 0) imperium.incrementAndGet();
+        if (concurrent == 0) imperium.set(imperium.get() + 10);
         this.concurrent = concurrent;
     }
 
