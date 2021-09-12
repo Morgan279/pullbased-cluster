@@ -11,6 +11,12 @@ public class RoundRobinProcessor {
         currentWeightMap.putIfAbsent(port, 0);
     }
 
+    public static void reset() {
+        synchronized (currentWeightMap) {
+            currentWeightMap.replaceAll((p, v) -> 0);
+        }
+    }
+
 
     public static int select(Map<Integer, Integer> weightMap) {
         int totalWeight = 0;
@@ -30,7 +36,7 @@ public class RoundRobinProcessor {
             }
             currentWeightMap.put(maxWeightPort, currentWeightMap.get(maxWeightPort) - totalWeight);
         }
-        
+
         return maxWeightPort;
     }
 }

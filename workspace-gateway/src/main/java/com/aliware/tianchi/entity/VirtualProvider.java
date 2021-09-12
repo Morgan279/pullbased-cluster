@@ -2,6 +2,7 @@ package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.constant.ProviderStatus;
+import com.aliware.tianchi.processor.RoundRobinProcessor;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -199,7 +200,10 @@ public class VirtualProvider {
     }
 
     public void setConcurrent(int concurrent) {
-        if (concurrent == 0) imperium.set(imperium.get() + 10);
+        if (concurrent == 0) {
+            imperium.incrementAndGet();
+            RoundRobinProcessor.reset();
+        }
         this.concurrent = concurrent;
     }
 
