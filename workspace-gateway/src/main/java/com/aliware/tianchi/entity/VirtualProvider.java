@@ -47,7 +47,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 15.5));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -139,8 +139,7 @@ public class VirtualProvider {
     }
 
     public double getRTWeight() {
-        double lambdaDiff = currentLambda - initialLambda;
-        return lambdaDiff > 0 ? lambdaDiff * 10 : 1;
+        return currentLambda - initialLambda;
     }
 
     public double getWeight(double maxWeight) {
@@ -200,6 +199,7 @@ public class VirtualProvider {
     }
 
     public void setConcurrent(int concurrent) {
+        if (concurrent == 0) imperium.incrementAndGet();
         this.concurrent = concurrent;
     }
 

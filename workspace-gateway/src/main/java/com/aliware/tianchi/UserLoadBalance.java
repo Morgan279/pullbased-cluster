@@ -29,7 +29,7 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] concurrentWeightArray = {3, 2, 1};
 
-    private final int[] RTWeightArray = {3, 2, 1};
+    private final int[] RTWeightArray = {4, 3, 2};
 
     private final int[] ThreadWeightArray = {4, 3, 2};
 
@@ -58,7 +58,7 @@ public class UserLoadBalance implements LoadBalance {
             //System.out.println(virtualProvider.getPort() + "'s weight: " + virtualProvider.getWeight(maxWeight) + " num: " + map.get(virtualProvider.getPort()).get());
         }
 
-        virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getRTWeight).reversed());
+        virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getRTWeight));
         for (int i = 0; i < RTWeightArray.length; ++i) {
             int port = virtualProviderList.get(i).getPort();
             weightMap.put(port, weightMap.get(port) + RTWeightArray[i]);

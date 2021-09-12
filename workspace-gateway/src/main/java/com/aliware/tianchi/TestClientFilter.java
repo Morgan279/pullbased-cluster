@@ -19,10 +19,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        if (virtualProvider.currentLimiter.get() < 1) {
-//            //System.out.println("work request exceeds limit");
-//            throw new RpcException("work request exceeds limit");
-//        }
+        if (virtualProvider.currentLimiter.get() < 1) {
+            //System.out.println("work request exceeds limit");
+            throw new RpcException("work request exceeds limit");
+        }
         virtualProvider.currentLimiter.decrementAndGet();
         //选址后记录RTT
         long startTime = System.currentTimeMillis();
