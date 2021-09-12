@@ -42,7 +42,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.setConcurrent(Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT)));
         //       System.out.println("concurrent: " + concurrent + "concurrent: " + virtualProvider.getConcurrent());
-        Supervisor.getVirtualProvider(port).setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
+        virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
         //System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(AttachmentKey.THREAD_FACTOR));
     }
 
