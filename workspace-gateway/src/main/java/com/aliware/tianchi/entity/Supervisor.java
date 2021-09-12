@@ -1,5 +1,6 @@
 package com.aliware.tianchi.entity;
 
+import com.aliware.tianchi.processor.RoundRobinProcessor;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.common.utils.ConcurrentHashSet;
 import org.apache.dubbo.rpc.Invoker;
@@ -33,6 +34,7 @@ public class Supervisor {
         //System.out.println("register provider, port: " + port + " thread:" + threads);
         virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         availableVirtualProviders.add(virtualProviderMap.get(port));
+        RoundRobinProcessor.register(port);
     }
 
     public static VirtualProvider getVirtualProvider(int port) {

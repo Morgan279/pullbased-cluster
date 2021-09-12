@@ -1,13 +1,10 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.entity.FutureFlow;
-import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.entity.VirtualProvider;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class TimeoutProcessor<T> implements Runnable {
 
@@ -15,7 +12,7 @@ public class TimeoutProcessor<T> implements Runnable {
 
     public TimeoutProcessor() {
         this.futureFlowQueue = new ConcurrentLinkedQueue<>();
-        new Thread(this).start();
+//        new Thread(this).start();
 //        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10);
 //        scheduledExecutorService.scheduleAtFixedRate(this, 50, 1, TimeUnit.MILLISECONDS);
     }

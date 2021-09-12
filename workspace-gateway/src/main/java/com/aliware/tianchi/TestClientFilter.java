@@ -19,10 +19,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-        if (virtualProvider.currentLimiter.get() < 1) {
-            //System.out.println("work request exceeds limit");
-            throw new RpcException("work request exceeds limit");
-        }
+//        if (virtualProvider.currentLimiter.get() < 1) {
+//            //System.out.println("work request exceeds limit");
+//            throw new RpcException("work request exceeds limit");
+//        }
         virtualProvider.currentLimiter.decrementAndGet();
         //选址后记录RTT
         long startTime = System.currentTimeMillis();
@@ -49,9 +49,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         int port = invoker.getUrl().getPort();
-        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
-            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
-        } else
+//        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
+//            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
+//        } else
         if (t.getMessage().contains("thread pool is exhausted")) {
             Supervisor.getVirtualProvider(port).currentLimiter.set(0);
         }

@@ -1,6 +1,5 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.entity.Supervisor;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -17,9 +16,9 @@ public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listen
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         //若没有可用的provider 则在选址前拦截请求
-        if (Supervisor.isOutOfService()) {
-            throw new RpcException("Temporarily out of service");
-        }
+//        if (Supervisor.isOutOfService()) {
+//            throw new RpcException("Temporarily out of service");
+//        }
         return invoker.invoke(invocation);
     }
 

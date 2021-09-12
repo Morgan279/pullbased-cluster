@@ -13,8 +13,6 @@ public class VirtualProvider {
 
     private static final int MAX_RT = 5000;
 
-    public int currentWeight = 0;
-
     public final AtomicInteger currentLimiter;
 
     public int threads;
@@ -71,16 +69,12 @@ public class VirtualProvider {
         return ThreadLocalRandom.current().nextDouble(1);
     }
 
-    public int getImperium() {
-        return imperium.get();
-    }
-
     public double getFactor() {
         return (double) (threads - concurrent) / threads;
     }
 
     public int getConcurrent() {
-        return (int) (threads * 14.67) - currentLimiter.get();
+        return this.concurrent;
     }
 
     public void addInference(long id, long retentionTime) {
@@ -118,7 +112,7 @@ public class VirtualProvider {
     public synchronized void recordTimeoutRequestId(long id) {
         if (inferenceRecords.containsKey(id)) correctId.add(id);
         timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(5000L));
-        recordTimeout();
+        //recordTimeout();
     }
 
     private void printInferenceProbability() {
@@ -159,7 +153,7 @@ public class VirtualProvider {
     }
 
     public void recordLatency(long latency) {
-        for (long i = (IMPERIUM_BOUND - latency) * 2; i >= 0; --i) {
+        for (long i = IMPERIUM_BOUND - latency; i >= 0; --i) {
             imperium.incrementAndGet();
         }
         synchronized (this) {
@@ -173,14 +167,14 @@ public class VirtualProvider {
         }
     }
 
-    public synchronized void recordTimeout(){
+    public synchronized void recordTimeout() {
         long now = System.currentTimeMillis();
-        while (!timeoutStamp.isEmpty() && now - timeoutStamp.peek() > 5){
+        while (!timeoutStamp.isEmpty() && now - timeoutStamp.peek() > 5) {
             timeoutStamp.pop();
         }
         timeoutStamp.push(now);
-        if(timeoutStamp.size() >= 30){
-           this.crush();
+        if (timeoutStamp.size() >= 30) {
+            this.crush();
         }
     }
 
