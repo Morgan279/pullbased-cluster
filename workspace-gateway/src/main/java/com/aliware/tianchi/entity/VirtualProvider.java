@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
 
-    private static final int IMPERIUM_BOUND = 3;
+    private static final int IMPERIUM_BOUND = 5;
 
     private static final int MAX_RT = 5000;
 
@@ -55,7 +55,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 800));
+        this.currentLimiter = new AtomicInteger((int) (threads * 1600));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -232,6 +232,7 @@ public class VirtualProvider {
     public void setConcurrent(int concurrent) {
         if (concurrent == 0) {
             imperium.incrementAndGet();
+            currentLimiter.set(currentLimiter.get() + 100);
             RoundRobinProcessor.reset();
         }
         this.concurrent = concurrent;
