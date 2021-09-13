@@ -36,7 +36,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrent = new AtomicInteger();
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(64, new NamedInternalThreadFactory("timeout-timer", true));
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(256, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
@@ -47,15 +47,15 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private static Map<Integer, List<Long>> latencyMap = new HashMap<>();
 
-    private static volatile long threshold = 100;
+    private static volatile long threshold = 50;
 
     private synchronized static void recordLatency(int port, long latency) {
-        latencyMap.putIfAbsent(port, new ArrayList<>(100000));
+        latencyMap.putIfAbsent(port, new ArrayList<>(10000));
         List<Long> latencyList = latencyMap.get(port);
         latencyList.add(latency);
-        if (latencyList.size() == 100000) {
+        if (latencyList.size() == 10000) {
             latencyList.sort(Long::compare);
-            threshold = latencyList.get(10000);
+            threshold = latencyList.get(30);
             latencyList.clear();
         }
     }
@@ -70,7 +70,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         long startTime = System.currentTimeMillis();
         Result result = invoker.invoke(invocation);
         long costTime = System.currentTimeMillis() - startTime;
-        recordLatency(port, costTime);
+        scheduledExecutorService.execute(() -> recordLatency(port, costTime));
         //System.out.println("concurrent: " + concurrent.get() + " cost time: " + costTime);
         return result;
     }
