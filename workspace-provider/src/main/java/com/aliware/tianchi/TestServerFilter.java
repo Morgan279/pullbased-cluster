@@ -11,9 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,27 +45,33 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
     }
 
-    private static Map<Integer, ConcurrentSkipListSet<Long>> latencyMap = new HashMap<>();
+    private static Map<Integer, List<Long>> latencyMap = new HashMap<>();
 
+    private static volatile long threshold = 100;
 
-    private static void recordLatency(int port, long latency) {
-        latencyMap.putIfAbsent(port, new ConcurrentSkipListSet<>());
-        latencyMap.get(port).add(latency);
+    private synchronized static void recordLatency(int port, long latency) {
+        latencyMap.putIfAbsent(port, new ArrayList<>(100000));
+        List<Long> latencyList = latencyMap.get(port);
+        latencyList.add(latency);
+        if (latencyList.size() == 100000) {
+            latencyList.sort(Long::compare);
+            threshold = latencyList.get(10000);
+            latencyList.clear();
+        }
     }
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        //int port = invoker.getUrl().getPort();
+        int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
         logger.info("concurrent: " + concurrent.get());
         Thread thread = Thread.currentThread();
-        scheduledExecutorService.schedule(thread::interrupt, 10, TimeUnit.MILLISECONDS);
-        //long startTime = System.currentTimeMillis();
+        scheduledExecutorService.schedule(thread::interrupt, threshold, TimeUnit.MILLISECONDS);
+        long startTime = System.currentTimeMillis();
         Result result = invoker.invoke(invocation);
-        //long costTime = System.currentTimeMillis() - startTime;
-        //recordLatency(port, costTime);
+        long costTime = System.currentTimeMillis() - startTime;
+        recordLatency(port, costTime);
         //System.out.println("concurrent: " + concurrent.get() + " cost time: " + costTime);
-
         return result;
     }
 

@@ -67,9 +67,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        } else
         if (!t.getMessage().contains("work request exceeds limit")) {
             virtualProvider.releaseConcurrent();
-        } else if (t.getMessage().contains("thread pool is exhausted")) {
-            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);
         }
+//        else if (t.getMessage().contains("thread pool is exhausted")) {
+//            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);
+//        }
         //System.out.println("TestClientFilter error: " + t.getMessage());
     }
 }
