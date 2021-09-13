@@ -1,6 +1,9 @@
 package com.aliware.tianchi.entity;
 
 
+import org.apache.dubbo.rpc.RpcException;
+
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
@@ -29,7 +32,7 @@ public class FutureFlow<T> {
     }
 
     public void forceTimeout() {
-        future.cancel(true);
+        ((CompletableFuture<T>) future).completeExceptionally(new RpcException("force timeout"));
     }
 
     public long getId() {

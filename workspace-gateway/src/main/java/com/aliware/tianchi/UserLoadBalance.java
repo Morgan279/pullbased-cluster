@@ -59,13 +59,14 @@ public class UserLoadBalance implements LoadBalance {
         }
 
         virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getRTWeight));
-        for (int i = 0; i < RTWeightArray.length; ++i) {
+        int len = Math.min(RTWeightArray.length, virtualProviderList.size());
+        for (int i = 0; i < len; ++i) {
             int port = virtualProviderList.get(i).getPort();
             weightMap.put(port, weightMap.get(port) + RTWeightArray[i]);
         }
 
         virtualProviderList.sort(Comparator.comparingDouble(VirtualProvider::getConcurrent));
-        for (int i = 0; i < concurrentWeightArray.length; ++i) {
+        for (int i = 0; i < len; ++i) {
             int port = virtualProviderList.get(i).getPort();
             weightMap.put(port, weightMap.get(port) + concurrentWeightArray[i]);
         }

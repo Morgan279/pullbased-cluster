@@ -7,6 +7,8 @@ import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 客户端过滤器（选址后）
  * 可选接口
@@ -15,24 +17,30 @@ import org.apache.dubbo.rpc.*;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
+
+    AtomicInteger successNum = new AtomicInteger();
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-        if (virtualProvider.currentLimiter.get() < 1) {
-            //System.out.println("work request exceeds limit");
-            throw new RpcException("work request exceeds limit");
+        if (virtualProvider.tryRequireConcurrent()) {
+            //选址后记录RTT
+            virtualProvider.requireConcurrent();
+            long startTime = System.currentTimeMillis();
+            return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+                long latency = System.currentTimeMillis() - startTime;
+                if (t == null && latency < 5000) {
+//                    System.out.println("recordLatency: " + port + "  " + latency + " success: " + successNum.incrementAndGet());
+                    virtualProvider.recordLatency(latency);
+                    virtualProvider.releaseConcurrent();
+//                    System.out.println("P99: " + virtualProvider.p99Latency.peek());
+                }
+            });
         }
-        virtualProvider.currentLimiter.decrementAndGet();
-        //选址后记录RTT
-        long startTime = System.currentTimeMillis();
-        return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-//            if (t == null) {
-//                //System.out.println("recordLatency: " + port + "  " + (System.currentTimeMillis() - startTime) + " weight: " + Supervisor.getVirtualProvider(port).getWeight() + " remain: " + virtualProvider.currentLimiter.get());
-//                virtualProvider.recordLatency(System.currentTimeMillis() - startTime);
-//            }
-            virtualProvider.recordLatency(System.currentTimeMillis() - startTime);
-        });
+
+        //RpcContext.getClientAttachment().getFuture().cancel(true);
+        throw new RpcException("work request exceeds limit");
     }
 
     @Override
@@ -43,22 +51,27 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         virtualProvider.setConcurrent(Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT)));
         //       System.out.println("concurrent: " + concurrent + "concurrent: " + virtualProvider.getConcurrent());
         virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
-        virtualProvider.currentLimiter.incrementAndGet();
+
         //System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(AttachmentKey.THREAD_FACTOR));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
+
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+        //scheduledExecutorService.schedule(virtualProvider.currentLimiter::incrementAndGet, 5, TimeUnit.MILLISECONDS);
+        //virtualProvider.releaseConcurrent();
 //        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
 //            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
 //        } else
-        if (t.getMessage().contains("thread pool is exhausted")) {
-            virtualProvider.currentLimiter.set(0);
+        if (t.getMessage().contains("work request exceeds limit")) {
+            //virtualProvider.currentLimiter.set(0);
+//            virtualProvider.currentLimit();
+//            scheduledExecutorService.schedule(() -> virtualProvider.status = ProviderStatus.AVAILABLE, 5, TimeUnit.MILLISECONDS);
+        } else {
+            virtualProvider.releaseConcurrent();
         }
-        virtualProvider.currentLimiter.incrementAndGet();
         //System.out.println("TestClientFilter error: " + t.getMessage());
-        //t.printStackTrace();
     }
 }

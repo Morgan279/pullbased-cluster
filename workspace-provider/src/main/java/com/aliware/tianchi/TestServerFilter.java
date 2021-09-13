@@ -6,11 +6,14 @@ import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.common.extension.ExtensionLoader;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
+import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
 import org.apache.dubbo.rpc.*;
 import oshi.SystemInfo;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,15 +33,33 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrent = new AtomicInteger();
 
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(64, new NamedInternalThreadFactory("timeout-timer", true));
+
     static {
         SYSTEM_INFO = new SystemInfo();
         INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
     }
 
+    private static Map<Integer, ConcurrentSkipListSet<Long>> latencyMap = new HashMap<>();
+
+
+    private static void recordLatency(int port, long latency) {
+        latencyMap.putIfAbsent(port, new ConcurrentSkipListSet<>());
+        latencyMap.get(port).add(latency);
+    }
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        //int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
-        return invoker.invoke(invocation);
+        Thread thread = Thread.currentThread();
+        scheduledExecutorService.schedule(thread::interrupt, 50, TimeUnit.MILLISECONDS);
+        //long startTime = System.currentTimeMillis();
+        Result result = invoker.invoke(invocation);
+        //long costTime = System.currentTimeMillis() - startTime;
+        //recordLatency(port, costTime);
+        //System.out.println("concurrent: " + concurrent.get() + " cost time: " + costTime);
+        return result;
     }
 
     @Override

@@ -14,7 +14,7 @@ public class VirtualProvider {
 
     private static final int MAX_RT = 5000;
 
-    public final AtomicInteger currentLimiter;
+    private final AtomicInteger currentLimiter;
 
     public int threads;
 
@@ -22,7 +22,7 @@ public class VirtualProvider {
 
     private final int port;
 
-    private volatile ProviderStatus status;
+    public volatile ProviderStatus status;
 
     private volatile double threadFactor;
 
@@ -42,13 +42,20 @@ public class VirtualProvider {
 
     private double currentLambda;
 
+    private double permitThreadsFactor;
+
+    private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - 0.999));
+
+    public PriorityQueue<Long> p99Latency = new PriorityQueue<>(queueLength, Long::compare);
+
+
     public Map<Long, Long> inferenceRecords = new HashMap<>();
 
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
+        this.currentLimiter = new AtomicInteger((int) (threads * 1.4));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -60,6 +67,8 @@ public class VirtualProvider {
         this.counter = 0;
         this.initialLambda = 0;
         this.currentLambda = 0.015;
+        this.permitThreadsFactor = 0.8;
+        this.status = ProviderStatus.AVAILABLE;
     }
 
     public double getThreadFactor(){
@@ -80,6 +89,22 @@ public class VirtualProvider {
 
     public void addInference(long id, long retentionTime) {
         inferenceRecords.put(id, retentionTime);
+    }
+
+    public boolean tryRequireConcurrent() {
+        return true;
+        //return currentLimiter.get() > 0;
+    }
+
+    public void releaseConcurrent() {
+        currentLimiter.incrementAndGet();
+//        if (currentLimiter.get() < threads * this.permitThreadsFactor) {
+//            currentLimiter.incrementAndGet();
+//        }
+    }
+
+    public void requireConcurrent() {
+        currentLimiter.decrementAndGet();
     }
 
     public void restart() {
@@ -163,6 +188,12 @@ public class VirtualProvider {
                 refreshLambda();
                 sum = 0;
                 counter = 0;
+            }
+            if (p99Latency.size() < queueLength) {
+                p99Latency.add(latency);
+            } else if (latency > p99Latency.peek()) {
+                p99Latency.poll();
+                p99Latency.add(latency);
             }
         }
     }
