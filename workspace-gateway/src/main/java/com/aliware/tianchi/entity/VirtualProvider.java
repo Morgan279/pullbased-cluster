@@ -55,7 +55,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger((int) (threads * 1.4));
+        this.currentLimiter = new AtomicInteger((int) (threads * 14.4));
         this.timeoutStamp = new Stack<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -92,8 +92,8 @@ public class VirtualProvider {
     }
 
     public boolean tryRequireConcurrent() {
-        return true;
-        //return currentLimiter.get() > 0;
+        //return true;
+        return currentLimiter.get() > 0;
     }
 
     public void releaseConcurrent() {
@@ -168,12 +168,11 @@ public class VirtualProvider {
         return currentLambda - initialLambda;
     }
 
-    public double getWeight(double maxWeight) {
+    public double getWeight() {
         double lambdaDiff = currentLambda - initialLambda;
         double RTWeight = lambdaDiff > 0 ? lambdaDiff * 10 : 1;
-        System.out.println(port + "'s RT weight : " + RTWeight);
-        //System.out.println("RTWeight: " + RTWeight + " thread factor: " + threadFactor + " weight: " + RTWeight * threadFactor);
-        double weight = RTWeight + ThreadLocalRandom.current().nextDouble(threads / 2000d + Math.abs(maxWeight - RTWeight)) + (double) threads / (concurrent + 1) / 300;
+        double weight = RTWeight + ThreadLocalRandom.current().nextDouble(Math.abs(Supervisor.maxWeight - RTWeight) * 1.414);
+        Supervisor.maxWeight = Math.max(Supervisor.maxWeight, weight);
         return weight;
     }
 

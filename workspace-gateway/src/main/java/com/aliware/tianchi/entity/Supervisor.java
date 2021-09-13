@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Supervisor {
 
+    public static volatile double maxWeight = 0;
+
     private static final int CRASH_RESTART_INTERVAL = 1;
 
     private static final int CURRENT_RESTART_INTERVAL = 1;
