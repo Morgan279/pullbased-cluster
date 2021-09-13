@@ -53,7 +53,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
         Thread thread = Thread.currentThread();
-        scheduledExecutorService.schedule(thread::interrupt, 50, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(thread::interrupt, 10, TimeUnit.MILLISECONDS);
         //long startTime = System.currentTimeMillis();
         Result result = invoker.invoke(invocation);
         //long costTime = System.currentTimeMillis() - startTime;
