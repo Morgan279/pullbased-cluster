@@ -3,8 +3,6 @@ package com.aliware.tianchi;
 import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -19,8 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
 
     AtomicInteger successNum = new AtomicInteger();
 

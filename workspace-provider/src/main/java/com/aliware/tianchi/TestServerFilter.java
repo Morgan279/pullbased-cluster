@@ -1,14 +1,14 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.constant.AttachmentKey;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.common.extension.ExtensionLoader;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
 import org.apache.dubbo.rpc.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
 import java.util.HashMap;
@@ -29,11 +29,11 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private static final int INIT_TOTAL_THREAD_COUNT;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
-
     private final AtomicInteger concurrent = new AtomicInteger();
 
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(64, new NamedInternalThreadFactory("timeout-timer", true));
+
+    private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
     static {
         SYSTEM_INFO = new SystemInfo();
@@ -52,6 +52,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         //int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
+        logger.info("concurrent: " + concurrent.get());
         Thread thread = Thread.currentThread();
         scheduledExecutorService.schedule(thread::interrupt, 10, TimeUnit.MILLISECONDS);
         //long startTime = System.currentTimeMillis();
@@ -59,6 +60,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //long costTime = System.currentTimeMillis() - startTime;
         //recordLatency(port, costTime);
         //System.out.println("concurrent: " + concurrent.get() + " cost time: " + costTime);
+
         return result;
     }
 
