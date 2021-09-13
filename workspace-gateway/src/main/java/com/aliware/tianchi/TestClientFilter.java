@@ -3,6 +3,8 @@ package com.aliware.tianchi;
 import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
+import com.sun.org.slf4j.internal.Logger;
+import com.sun.org.slf4j.internal.LoggerFactory;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -17,6 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
 
     AtomicInteger successNum = new AtomicInteger();
 
@@ -65,12 +69,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
 //            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
 //        } else
-        if (t.getMessage().contains("work request exceeds limit")) {
-            //virtualProvider.currentLimiter.set(0);
-//            virtualProvider.currentLimit();
-//            scheduledExecutorService.schedule(() -> virtualProvider.status = ProviderStatus.AVAILABLE, 5, TimeUnit.MILLISECONDS);
-        } else {
+        if (!t.getMessage().contains("work request exceeds limit")) {
             virtualProvider.releaseConcurrent();
+        } else if (t.getMessage().contains("thread pool is exhausted")) {
+            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);
         }
         //System.out.println("TestClientFilter error: " + t.getMessage());
     }

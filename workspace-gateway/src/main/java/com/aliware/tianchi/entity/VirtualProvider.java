@@ -14,7 +14,7 @@ public class VirtualProvider {
 
     private static final int MAX_RT = 5000;
 
-    private final AtomicInteger currentLimiter;
+    public final AtomicInteger currentLimiter;
 
     public int threads;
 
@@ -92,8 +92,8 @@ public class VirtualProvider {
     }
 
     public boolean tryRequireConcurrent() {
-        //return true;
-        return currentLimiter.get() > 0;
+        return true;
+        //return currentLimiter.get() > 0;
     }
 
     public void releaseConcurrent() {
