@@ -60,14 +60,14 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
         final int maxThreadCount = executor.getMaximumPoolSize();
-        final int remainThreadCount = Math.max(maxThreadCount * 8 - concurrent.get(), 0);
+        final int remainThreadCount = Math.max(maxThreadCount + (int)Math.sqrt(maxThreadCount) - concurrent.get(), 0);
         //logger.info("remain thread: {}", remainThreadCount);
         //logger.info("concurrent: {}", concurrent.get());
 //        int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
 //        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
         //System.out.println("concurrent: " + concurrent.get());
         //LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
-        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.get()));
+        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(maxThreadCount + (int)Math.sqrt(maxThreadCount)));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(remainThreadCount));
         //appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
         //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));

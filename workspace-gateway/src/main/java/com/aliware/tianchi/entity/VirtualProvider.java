@@ -14,6 +14,8 @@ public class VirtualProvider {
 
     private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
 
+    public long lastInvokeTime = System.currentTimeMillis();
+
     private static final int IMPERIUM_BOUND = 5;
 
     private static final int MAX_RT = 5000;
@@ -98,7 +100,7 @@ public class VirtualProvider {
         inferenceRecords.put(id, retentionTime);
     }
 
-    private volatile long averageRT = 10;
+    public volatile long averageRT = 10;
 
     public long getLatencyThreshold() {
         return Math.max((long) (this.averageRT * 1.5), 10);

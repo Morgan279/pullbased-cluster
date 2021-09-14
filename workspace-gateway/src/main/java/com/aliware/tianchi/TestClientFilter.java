@@ -5,9 +5,13 @@ import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
+import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * 客户端过滤器（选址后）
@@ -26,15 +30,20 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-        if (virtualProvider.tryRequireConcurrent()) {
+        long now = System.currentTimeMillis();
+        if(now - virtualProvider.lastInvokeTime >= virtualProvider.averageRT){
+            virtualProvider.lastInvokeTime = now;
+            virtualProvider.inflight.set(0);
+        }
+        if (virtualProvider.inflight.get() < virtualProvider.getConcurrent()) {
             //选址后记录RTT
 //            virtualProvider.requireConcurrent();
             long startTime = System.currentTimeMillis();
             invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
-            //virtualProvider.inflight.incrementAndGet();
+            virtualProvider.inflight.incrementAndGet();
             return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //                logger.info("inflight: {}", virtualProvider.inflight.decrementAndGet());
-                //virtualProvider.inflight.decrementAndGet();
+                virtualProvider.inflight.decrementAndGet();
                 long latency = System.currentTimeMillis() - startTime;
                 if (t == null) {
 //                    logger.info("recordLatency: " + port + "  " + latency);
