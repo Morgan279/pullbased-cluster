@@ -34,7 +34,7 @@ public class RoundRobinProcessor {
                     maxWeightPort = port;
                 }
             }
-            currentWeightMap.put(maxWeightPort, currentWeightMap.get(maxWeightPort) - totalWeight);
+            currentWeightMap.put(maxWeightPort, maxWeight - totalWeight);
         }
 
         return maxWeightPort;
@@ -43,7 +43,7 @@ public class RoundRobinProcessor {
     public static int selectMaxWeight(Map<Integer, Integer> weightMap) {
         int maxWeight = -1;
         int maxWeightPort = -1;
-        
+
         for (Integer port : weightMap.keySet()) {
             int weight = weightMap.get(port);
             if (weight > maxWeight) {

@@ -5,12 +5,7 @@ import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.rpc.*;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 客户端过滤器（选址后）
@@ -21,9 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
-    AtomicInteger successNum = new AtomicInteger();
+    //AtomicInteger successNum = new AtomicInteger();
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("record-timer", true));
+    //private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("record-timer", true));
 
 
     @Override
@@ -73,7 +68,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
 
         if (!t.getMessage().contains("force timeout") && !t.getMessage().contains("Unexpected exception")) {
-            scheduledExecutorService.execute(virtualProvider::recordError);
+            //scheduledExecutorService.execute(virtualProvider::recordError);
+            virtualProvider.recordError();
         }
 //        else if (t.getMessage().contains("thread pool is exhausted")) {
 //            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);
