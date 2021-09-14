@@ -26,15 +26,15 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-        if (virtualProvider.inflight.get() < virtualProvider.getRemainThreadCount()) {
+        if (virtualProvider.tryRequireConcurrent()) {
             //选址后记录RTT
 //            virtualProvider.requireConcurrent();
             long startTime = System.currentTimeMillis();
             invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
-            virtualProvider.inflight.incrementAndGet();
+            //virtualProvider.inflight.incrementAndGet();
             return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //                logger.info("inflight: {}", virtualProvider.inflight.decrementAndGet());
-                virtualProvider.inflight.decrementAndGet();
+                //virtualProvider.inflight.decrementAndGet();
                 long latency = System.currentTimeMillis() - startTime;
                 if (t == null) {
 //                    logger.info("recordLatency: " + port + "  " + latency);
