@@ -65,7 +65,8 @@ public class UserLoadBalance implements LoadBalance {
         accumulateWeight(weightMap, virtualProviderList, ErrorWeightArray, Comparator.comparingInt(VirtualProvider::getRecentErrorSize));
         accumulateWeight(weightMap, virtualProviderList, P999WeightArray, Comparator.comparingLong(VirtualProvider::getP999Latency));
 
-        int selectedPort = RoundRobinProcessor.select(weightMap);
+        //int selectedPort = RoundRobinProcessor.select(weightMap);
+        int selectedPort = RoundRobinProcessor.selectMaxWeight(weightMap);
         for (Invoker<T> invoker : invokers) {
             if (invoker.getUrl().getPort() == selectedPort) return invoker;
         }

@@ -54,11 +54,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
         int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-        virtualProvider.setConcurrent(Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT)));
-        //       System.out.println("concurrent: " + concurrent + "concurrent: " + virtualProvider.getConcurrent());
+        virtualProvider.setConcurrent(concurrent);
         virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
-
-        //System.out.println(invoker.getUrl().getPort() + " thread: " + appResponse.getAttachment(AttachmentKey.THREAD_FACTOR));
     }
 
     @Override

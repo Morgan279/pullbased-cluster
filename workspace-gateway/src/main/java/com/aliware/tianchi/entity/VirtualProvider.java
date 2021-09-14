@@ -54,7 +54,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger(threads * 2400);
+        this.currentLimiter = new AtomicInteger(threads * 3200);
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -237,8 +237,8 @@ public class VirtualProvider {
         if (concurrent == 0) {
             currentLimiter.set(currentLimiter.get() + 100);
             RoundRobinProcessor.reset();
-        } else if (concurrent < 10) {
-            imperium.set(imperium.get() + 10 - concurrent);
+        } else if (concurrent < 30) {
+            imperium.set(imperium.get() + 30 - concurrent);
         }
         this.concurrent = concurrent;
     }

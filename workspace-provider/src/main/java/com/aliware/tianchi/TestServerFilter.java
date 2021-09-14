@@ -9,10 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import oshi.SystemInfo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +29,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrent = new AtomicInteger();
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32, new NamedInternalThreadFactory("timeout-timer", true));
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(64, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
@@ -41,21 +37,21 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         SYSTEM_INFO = new SystemInfo();
         INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
     }
-
-    private static Map<Integer, List<Long>> latencyMap = new HashMap<>();
-
-    private static volatile long threshold = 50;
-
-    private synchronized static void recordLatency(int port, long latency) {
-        latencyMap.putIfAbsent(port, new ArrayList<>(10000));
-        List<Long> latencyList = latencyMap.get(port);
-        latencyList.add(latency);
-        if (latencyList.size() == 10000) {
-            latencyList.sort(Long::compare);
-            threshold = latencyList.get(30);
-            latencyList.clear();
-        }
-    }
+//
+//    private static Map<Integer, List<Long>> latencyMap = new HashMap<>();
+//
+//    private static volatile long threshold = 50;
+//
+//    private synchronized static void recordLatency(int port, long latency) {
+//        latencyMap.putIfAbsent(port, new ArrayList<>(10000));
+//        List<Long> latencyList = latencyMap.get(port);
+//        latencyList.add(latency);
+//        if (latencyList.size() == 10000) {
+//            latencyList.sort(Long::compare);
+//            threshold = latencyList.get(30);
+//            latencyList.clear();
+//        }
+//    }
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
