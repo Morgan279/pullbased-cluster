@@ -1,15 +1,19 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
-import com.aliware.tianchi.processor.RoundRobinProcessor;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -19,6 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 选手需要基于此类实现自己的负载均衡算法
  */
 public class UserLoadBalance implements LoadBalance {
+
+    private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
+
 
     private double globalMaxWeight = 0;
 
@@ -40,39 +47,42 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
+        Invoker<T> selected = invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        //logger.info("selected: {}", selected.getUrl().getPort());
+        return selected;
 //        return MaxWeightDispatchProcessor.select(invokers);
-
-        for (Invoker<T> invoker : invokers) {
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            if (virtualProvider.hasImperium()) {
-                virtualProvider.executeImperium();
-                return invoker;
-            }
-        }
-
-        Map<Integer, Integer> weightMap = new HashMap<>(invokers.size());
-        List<VirtualProvider> virtualProviderList = new ArrayList<>(invokers.size());
-        for (Invoker<T> invoker : invokers) {
-            //map.putIfAbsent(invoker.getUrl().getPort(), new AtomicInteger());
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            weightMap.put(virtualProvider.getPort(), 0);
-            virtualProviderList.add(virtualProvider);
-            //System.out.println(virtualProvider.getPort() + "'s weight: " + virtualProvider.getWeight(maxWeight) + " num: " + map.get(virtualProvider.getPort()).get());
-        }
-
-        accumulateWeight(weightMap, virtualProviderList, RTWeightArray, Comparator.comparingDouble(VirtualProvider::getRTWeight));
-        accumulateWeight(weightMap, virtualProviderList, concurrentWeightArray, Comparator.comparingInt(VirtualProvider::getConcurrent));
-        accumulateWeight(weightMap, virtualProviderList, ErrorWeightArray, Comparator.comparingInt(VirtualProvider::getRecentErrorSize));
-        accumulateWeight(weightMap, virtualProviderList, P999WeightArray, Comparator.comparingLong(VirtualProvider::getP999Latency));
-        accumulateWeight(weightMap, virtualProviderList, RandomWeightArray, Comparator.comparingDouble(VirtualProvider::getRandomWeight));
-
-        int selectedPort = RoundRobinProcessor.select(weightMap);
-        //int selectedPort = RoundRobinProcessor.selectMaxWeight(weightMap);
-        for (Invoker<T> invoker : invokers) {
-            if (invoker.getUrl().getPort() == selectedPort) return invoker;
-        }
-
-        throw new RpcException("there is no available provider");
+//
+//        for (Invoker<T> invoker : invokers) {
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            if (virtualProvider.hasImperium()) {
+//                virtualProvider.executeImperium();
+//                return invoker;
+//            }
+//        }
+//
+//        Map<Integer, Integer> weightMap = new HashMap<>(invokers.size());
+//        List<VirtualProvider> virtualProviderList = new ArrayList<>(invokers.size());
+//        for (Invoker<T> invoker : invokers) {
+//            //map.putIfAbsent(invoker.getUrl().getPort(), new AtomicInteger());
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            weightMap.put(virtualProvider.getPort(), 0);
+//            virtualProviderList.add(virtualProvider);
+//            //System.out.println(virtualProvider.getPort() + "'s weight: " + virtualProvider.getWeight(maxWeight) + " num: " + map.get(virtualProvider.getPort()).get());
+//        }
+//
+//        accumulateWeight(weightMap, virtualProviderList, RTWeightArray, Comparator.comparingDouble(VirtualProvider::getRTWeight));
+//        accumulateWeight(weightMap, virtualProviderList, concurrentWeightArray, Comparator.comparingInt(VirtualProvider::getRemainThreadCount).reversed());
+//        accumulateWeight(weightMap, virtualProviderList, ErrorWeightArray, Comparator.comparingInt(VirtualProvider::getRecentErrorSize));
+//        accumulateWeight(weightMap, virtualProviderList, P999WeightArray, Comparator.comparingLong(VirtualProvider::getP999Latency));
+//        accumulateWeight(weightMap, virtualProviderList, RandomWeightArray, Comparator.comparingDouble(VirtualProvider::getRandomWeight));
+//
+//        int selectedPort = RoundRobinProcessor.select(weightMap);
+//        //int selectedPort = RoundRobinProcessor.selectMaxWeight(weightMap);
+//        for (Invoker<T> invoker : invokers) {
+//            if (invoker.getUrl().getPort() == selectedPort) return invoker;
+//        }
+//
+//        throw new RpcException("there is no available provider");
     }
 
     private void accumulateWeight(Map<Integer, Integer> weightMap, List<VirtualProvider> virtualProviderList, int[] weightArray, Comparator<VirtualProvider> virtualProviderComparator) {

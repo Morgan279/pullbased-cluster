@@ -3,6 +3,8 @@ package com.aliware.tianchi.entity;
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.constant.ProviderStatus;
 import com.aliware.tianchi.processor.RoundRobinProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -10,11 +12,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
 
+    private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
+
     private static final int IMPERIUM_BOUND = 5;
 
     private static final int MAX_RT = 5000;
-
-    public final AtomicInteger currentLimiter;
 
     public int threads;
 
@@ -27,6 +29,8 @@ public class VirtualProvider {
     private volatile double threadFactor;
 
     private volatile int concurrent;
+
+    private volatile int remainThreadCount;
 
     private final Deque<Long> errorStamp;
 
@@ -44,7 +48,9 @@ public class VirtualProvider {
 
     private double permitThreadsFactor;
 
-    private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - 0.999));
+    private final double SAMPLE_FACTOR = 0.99;
+
+    private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - SAMPLE_FACTOR));
 
     private final PriorityQueue<Long> p99Latency = new PriorityQueue<>(queueLength, Long::compare);
 
@@ -53,8 +59,8 @@ public class VirtualProvider {
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
+        this.remainThreadCount = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger(threads * 3200);
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
@@ -90,21 +96,18 @@ public class VirtualProvider {
         inferenceRecords.put(id, retentionTime);
     }
 
+    private volatile long averageRT = 10;
+
+    public long getLatencyThreshold() {
+        return Math.max((long) (this.averageRT * 1.5), 10);
+    }
+
     public boolean tryRequireConcurrent() {
+        //logger.info("remain: {}", remainThreadCount);
+        return remainThreadCount > 0;
         //return true;
-        return currentLimiter.get() > 0;
     }
 
-    public void releaseConcurrent() {
-        currentLimiter.incrementAndGet();
-//        if (currentLimiter.get() < threads * this.permitThreadsFactor) {
-//            currentLimiter.incrementAndGet();
-//        }
-    }
-
-    public void requireConcurrent() {
-        currentLimiter.decrementAndGet();
-    }
 
     public void restart() {
         if (ProviderStatus.AVAILABLE.equals(this.status)) return;
@@ -184,6 +187,7 @@ public class VirtualProvider {
             ++counter;
             if (counter == N) {
                 refreshLambda();
+                averageRT = sum / counter;
                 sum = 0;
                 counter = 0;
             }
@@ -225,22 +229,29 @@ public class VirtualProvider {
         //System.out.println("currentLambda: " + currentLambda + " initial: " + initialLambda + " diff: " + (currentLambda - initialLambda));
     }
 
-    public int getPort() {
-        return this.port;
-    }
-
-    public void setThreadFactor(double threadFactor) {
-        this.threadFactor = threadFactor;
-    }
-
     public void setConcurrent(int concurrent) {
         if (concurrent == 0) {
-            currentLimiter.set(currentLimiter.get() + 100);
             RoundRobinProcessor.reset();
         } else if (concurrent < 30) {
             imperium.set(imperium.get() + 30 - concurrent);
         }
         this.concurrent = concurrent;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public int getRemainThreadCount() {
+        return this.remainThreadCount;
+    }
+
+    public void setRemainThreadCount(int remainThreadCount) {
+        this.remainThreadCount = remainThreadCount;
+    }
+
+    public void setThreadFactor(double threadFactor) {
+        this.threadFactor = threadFactor;
     }
 
     @Override

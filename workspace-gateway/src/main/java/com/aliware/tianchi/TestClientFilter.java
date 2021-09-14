@@ -6,6 +6,8 @@ import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 客户端过滤器（选址后）
@@ -16,9 +18,8 @@ import org.apache.dubbo.rpc.*;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
-    //AtomicInteger successNum = new AtomicInteger();
-
     //private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("record-timer", true));
+    private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
 
 
     @Override
@@ -27,15 +28,15 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
         if (virtualProvider.tryRequireConcurrent()) {
             //选址后记录RTT
-            virtualProvider.requireConcurrent();
+//            virtualProvider.requireConcurrent();
             long startTime = System.currentTimeMillis();
+            invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
             return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
                 long latency = System.currentTimeMillis() - startTime;
-                if (t == null && latency < 5000) {
-//                    System.out.println("recordLatency: " + port + "  " + latency + " success: " + successNum.incrementAndGet());
+                if (t == null) {
+//                    logger.info("recordLatency: " + port + "  " + latency);
                     virtualProvider.recordLatency(latency);
-                    virtualProvider.releaseConcurrent();
-//                    System.out.println("P99: " + virtualProvider.p99Latency.peek());
+//                    virtualProvider.releaseConcurrent();
                 }
             });
         }
@@ -50,12 +51,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
         int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.setConcurrent(concurrent);
+        virtualProvider.setRemainThreadCount(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
         virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
         //scheduledExecutorService.schedule(virtualProvider.currentLimiter::incrementAndGet, 5, TimeUnit.MILLISECONDS);
@@ -63,9 +64,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        if (t.getMessage().contains("org.apache.dubbo.remoting.TimeoutException")) {
 //            Supervisor.getVirtualProvider(port).recordTimeoutRequestId(Long.parseLong(invocation.getAttachment(AttachmentKey.INVOKE_ID)));
 //        } else
-        if (!t.getMessage().contains("work request exceeds limit")) {
-            virtualProvider.releaseConcurrent();
-        }
+//        if (!t.getMessage().contains("work request exceeds limit")) {
+//            virtualProvider.releaseConcurrent();
+//        }
 
         if (!t.getMessage().contains("force timeout") && !t.getMessage().contains("Unexpected exception")) {
             //scheduledExecutorService.execute(virtualProvider::recordError);

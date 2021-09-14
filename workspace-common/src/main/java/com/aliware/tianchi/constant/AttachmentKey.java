@@ -8,4 +8,8 @@ public abstract class AttachmentKey {
 
     public static final String CONCURRENT = "concurrent";
 
+    public static final String REMAIN_THREAD = "remain_thread";
+
+    public static final String LATENCY_THRESHOLD = "latency_threshold";
+
 }
