@@ -64,6 +64,7 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.remainThreadCount = threads;
+        this.concurrent =threads + (int)Math.sqrt(threads);
         this.threadFactor = threads / 10d;
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
