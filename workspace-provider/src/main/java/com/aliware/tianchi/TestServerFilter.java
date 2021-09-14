@@ -57,7 +57,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         //int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
-        logger.info("concurrent: " + concurrent.get());
+        //logger.info("concurrent: " + concurrent.get());
         Thread thread = Thread.currentThread();
         scheduledExecutorService.schedule(thread::interrupt, 100, TimeUnit.MILLISECONDS);
         //long startTime = System.currentTimeMillis();

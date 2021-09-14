@@ -36,7 +36,7 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] IWeightArray = {9, 4, 3};
 
-    private final int[] RandomWeightArray = {3, 2, 1};
+    private final int[] RandomWeightArray = {7, 4, 3};
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -64,9 +64,10 @@ public class UserLoadBalance implements LoadBalance {
         accumulateWeight(weightMap, virtualProviderList, concurrentWeightArray, Comparator.comparingInt(VirtualProvider::getConcurrent));
         accumulateWeight(weightMap, virtualProviderList, ErrorWeightArray, Comparator.comparingInt(VirtualProvider::getRecentErrorSize));
         accumulateWeight(weightMap, virtualProviderList, P999WeightArray, Comparator.comparingLong(VirtualProvider::getP999Latency));
+        accumulateWeight(weightMap, virtualProviderList, RandomWeightArray, Comparator.comparingDouble(VirtualProvider::getRandomWeight));
 
-        //int selectedPort = RoundRobinProcessor.select(weightMap);
-        int selectedPort = RoundRobinProcessor.selectMaxWeight(weightMap);
+        int selectedPort = RoundRobinProcessor.select(weightMap);
+        //int selectedPort = RoundRobinProcessor.selectMaxWeight(weightMap);
         for (Invoker<T> invoker : invokers) {
             if (invoker.getUrl().getPort() == selectedPort) return invoker;
         }
