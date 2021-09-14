@@ -5,8 +5,11 @@ import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
+import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.rpc.*;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -19,6 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     AtomicInteger successNum = new AtomicInteger();
+
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("record-timer", true));
+
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -67,6 +73,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        } else
         if (!t.getMessage().contains("work request exceeds limit")) {
             virtualProvider.releaseConcurrent();
+        }
+
+        if (!t.getMessage().contains("force timeout") && !t.getMessage().contains("Unexpected exception")) {
+            scheduledExecutorService.execute(virtualProvider::recordError);
         }
 //        else if (t.getMessage().contains("thread pool is exhausted")) {
 //            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);

@@ -28,7 +28,7 @@ public class VirtualProvider {
 
     private volatile int concurrent;
 
-    private final Stack<Long> timeoutStamp;
+    private final Deque<Long> errorStamp;
 
     private final AtomicInteger imperium;
 
@@ -46,8 +46,7 @@ public class VirtualProvider {
 
     private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - 0.999));
 
-    public PriorityQueue<Long> p99Latency = new PriorityQueue<>(queueLength, Long::compare);
-
+    private final PriorityQueue<Long> p99Latency = new PriorityQueue<>(queueLength, Long::compare);
 
     public Map<Long, Long> inferenceRecords = new HashMap<>();
 
@@ -55,8 +54,8 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.threadFactor = threads / 10d;
-        this.currentLimiter = new AtomicInteger(threads * 1600);
-        this.timeoutStamp = new Stack<>();
+        this.currentLimiter = new AtomicInteger(threads * 2400);
+        this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
         this.timeoutRequests = new ArrayList<>();
         this.init();
@@ -111,7 +110,7 @@ public class VirtualProvider {
         if (ProviderStatus.AVAILABLE.equals(this.status)) return;
 
         this.imperium.set(0);
-        this.timeoutStamp.clear();
+        this.errorStamp.clear();
         this.init();
         this.status = ProviderStatus.AVAILABLE;
     }
@@ -197,15 +196,20 @@ public class VirtualProvider {
         }
     }
 
-    public synchronized void recordTimeout() {
+    public long getP999Latency() {
+        return Optional.ofNullable(p99Latency.peek()).orElse(100L);
+    }
+
+    public synchronized void recordError() {
         long now = System.currentTimeMillis();
-        while (!timeoutStamp.isEmpty() && now - timeoutStamp.peek() > 5) {
-            timeoutStamp.pop();
+        while (!errorStamp.isEmpty() && (now - errorStamp.getFirst() > 5)) {
+            errorStamp.removeFirst();
         }
-        timeoutStamp.push(now);
-        if (timeoutStamp.size() >= 30) {
-            this.crush();
-        }
+        errorStamp.addLast(now);
+    }
+
+    public int getRecentErrorSize() {
+        return errorStamp.size();
     }
 
     public double getCdf(long retentionTime) {

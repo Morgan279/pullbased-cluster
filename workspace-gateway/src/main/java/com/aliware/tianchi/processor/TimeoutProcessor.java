@@ -4,7 +4,6 @@ import com.aliware.tianchi.entity.FutureFlow;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -37,7 +36,7 @@ public class TimeoutProcessor<T> implements Runnable {
 //                    virtualProvider.addInference(futureFlow.getId(), retentionTime);
 //                    futureFlow.forceTimeout();
 //                }
-                if (futureFlow.getRetentionTime() > Optional.ofNullable(virtualProvider.p99Latency.peek()).orElse(200L)) {
+                if (futureFlow.getRetentionTime() > virtualProvider.getP999Latency()) {
                     futureFlow.forceTimeout();
                 } else futureFlowQueue.add(futureFlow);
             }
