@@ -48,6 +48,8 @@ public class VirtualProvider {
 
     private double permitThreadsFactor;
 
+    public AtomicInteger inflight = new AtomicInteger();
+
     private final double SAMPLE_FACTOR = 0.99;
 
     private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - SAMPLE_FACTOR));

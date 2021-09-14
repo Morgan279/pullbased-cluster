@@ -60,7 +60,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
         ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
         final int maxThreadCount = executor.getMaximumPoolSize();
-        final int remainThreadCount = Math.max(maxThreadCount * 16 - concurrent.get(), 0);
+        final int remainThreadCount = Math.max(maxThreadCount * 2 - concurrent.get(), 0);
         //logger.info("remain thread: {}", remainThreadCount);
         //logger.info("concurrent: {}", concurrent.get());
 //        int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
