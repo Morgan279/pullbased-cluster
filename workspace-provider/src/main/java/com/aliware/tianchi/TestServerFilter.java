@@ -3,9 +3,7 @@ package com.aliware.tianchi;
 import com.aliware.tianchi.constant.AttachmentKey;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.common.extension.ExtensionLoader;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
-import org.apache.dubbo.common.threadpool.manager.ExecutorRepository;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,7 +33,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrent = new AtomicInteger();
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(256, new NamedInternalThreadFactory("timeout-timer", true));
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
@@ -62,15 +59,15 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        int port = invoker.getUrl().getPort();
+        //int port = invoker.getUrl().getPort();
         concurrent.incrementAndGet();
         logger.info("concurrent: " + concurrent.get());
         Thread thread = Thread.currentThread();
-        scheduledExecutorService.schedule(thread::interrupt, threshold, TimeUnit.MILLISECONDS);
-        long startTime = System.currentTimeMillis();
+        scheduledExecutorService.schedule(thread::interrupt, 10, TimeUnit.MILLISECONDS);
+        //long startTime = System.currentTimeMillis();
         Result result = invoker.invoke(invocation);
-        long costTime = System.currentTimeMillis() - startTime;
-        scheduledExecutorService.execute(() -> recordLatency(port, costTime));
+        //long costTime = System.currentTimeMillis() - startTime;
+        //scheduledExecutorService.execute(() -> recordLatency(port, costTime));
         //System.out.println("concurrent: " + concurrent.get() + " cost time: " + costTime);
         return result;
     }
@@ -78,17 +75,17 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         concurrent.decrementAndGet();
-        ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
-        int maxThreadCount = executor.getMaximumPoolSize();
-        int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
-        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
+//        ExecutorRepository executorRepository = ExtensionLoader.getExtensionLoader(ExecutorRepository.class).getDefaultExtension();
+//        ThreadPoolExecutor executor = (ThreadPoolExecutor) executorRepository.getExecutor(invoker.getUrl());
+//        int maxThreadCount = executor.getMaximumPoolSize();
+//        int totalThreadCount = SYSTEM_INFO.getOperatingSystem().getThreadCount();
+//        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
         //System.out.println("concurrent: " + concurrent.get());
         //LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
         //System.out.println("max: " + maxThreadCount + " bucket remain: " + BUCKET.availablePermits() + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
         //System.out.println(" factor: " + threadFactor);
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.get()));
-        appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
+        //appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
         appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 

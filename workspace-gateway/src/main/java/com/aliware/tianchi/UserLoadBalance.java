@@ -1,7 +1,6 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.entity.VirtualProvider;
+import com.aliware.tianchi.processor.MaxWeightDispatchProcessor;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
@@ -37,27 +36,7 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        double maxWeight = -1;
-        Invoker<T> selectedInvoker = null;
-        for (Invoker<T> invoker : invokers) {
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            if (Supervisor.isProviderAvailable(virtualProvider)) {
-                //LOGGER.info(invoker.getUrl().getPort() + ": weight: " + virtualProvider.getWeight());
-                if (virtualProvider.hasImperium()) {
-                    virtualProvider.executeImperium();
-                    return invoker;
-                } else if (virtualProvider.getWeight() > maxWeight) {
-                    selectedInvoker = invoker;
-                    maxWeight = virtualProvider.getWeight();
-                }
-            }
-        }
-
-        if (selectedInvoker == null) {
-            throw new RpcException("there is no available provider");
-        }
-
-        return selectedInvoker;
+        return MaxWeightDispatchProcessor.select(invokers);
 
 //        for (Invoker<T> invoker : invokers) {
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
@@ -109,30 +88,6 @@ public class UserLoadBalance implements LoadBalance {
 //        }
 //
 //        throw new RpcException("there is no available provider");
-
-//        Invoker<T> selectedInvoker = null;
-//        for (Invoker<T> invoker : invokers) {
-//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//            if (Supervisor.isProviderAvailable(virtualProvider)) {
-//                LOGGER.info(invoker.getUrl().getPort() + ": weight: " + virtualProvider.getWeight(globalMaxWeight));
-//                if (virtualProvider.hasImperium()) {
-//                    virtualProvider.executeImperium();
-//                    map.get(virtualProvider.getPort()).incrementAndGet();
-//                    return invoker;
-//                } else if (virtualProvider.getWeight(globalMaxWeight) > maxWeight) {
-//                    selectedInvoker = invoker;
-//                    maxWeight = virtualProvider.getWeight(globalMaxWeight);
-//                }
-//            }
-//        }
-//
-//        if (selectedInvoker == null) {
-//            throw new RpcException("there is no available provider");
-//        }
-//
-//        globalMaxWeight = maxWeight;
-//        map.get(selectedInvoker.getUrl().getPort()).incrementAndGet();
-//        return selectedInvoker;
     }
 
 }
