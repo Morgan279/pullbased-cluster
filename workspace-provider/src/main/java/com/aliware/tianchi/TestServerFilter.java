@@ -67,7 +67,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 //        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
         //System.out.println("concurrent: " + concurrent.get());
         //LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
-        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(maxThreadCount + (int)Math.sqrt(maxThreadCount)));
+        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(maxThreadCount - (int) Math.sqrt(maxThreadCount)));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(remainThreadCount));
         //appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
         //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
