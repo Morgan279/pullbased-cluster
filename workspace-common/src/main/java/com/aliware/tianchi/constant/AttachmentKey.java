@@ -12,4 +12,8 @@ public abstract class AttachmentKey {
 
     public static final String LATENCY_THRESHOLD = "latency_threshold";
 
+    public static final String EXECUTE_ELAPSE = "execute_elapse";
+
+    public static final String LAST_COMPUTED = "last_computed";
+
 }

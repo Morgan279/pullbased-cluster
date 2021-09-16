@@ -2,6 +2,7 @@ package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.constant.ProviderStatus;
+import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
 import com.aliware.tianchi.processor.RoundRobinProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,8 @@ public class VirtualProvider {
     private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
 
     public long lastInvokeTime = System.currentTimeMillis();
+
+    public AtomicInteger computed = new AtomicInteger();
 
     private static final int IMPERIUM_BOUND = 5;
 
@@ -38,8 +41,6 @@ public class VirtualProvider {
 
     private final AtomicInteger imperium;
 
-    private final List<Long> timeoutRequests;
-
     private int counter;
 
     private long sum;
@@ -52,13 +53,13 @@ public class VirtualProvider {
 
     public AtomicInteger inflight = new AtomicInteger();
 
+    private final ConcurrentLimitProcessor concurrentLimitProcessor;
+
     private final double SAMPLE_FACTOR = 0.99;
 
     private final int queueLength = (int) (Config.SAMPLING_COUNT * (1 - SAMPLE_FACTOR));
 
     private final PriorityQueue<Long> p99Latency = new PriorityQueue<>(queueLength, Long::compare);
-
-    public Map<Long, Long> inferenceRecords = new HashMap<>();
 
     public VirtualProvider(int port, int threads) {
         this.port = port;
@@ -68,7 +69,7 @@ public class VirtualProvider {
         this.threadFactor = threads / 10d;
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
-        this.timeoutRequests = new ArrayList<>();
+        this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         this.init();
     }
 
@@ -97,78 +98,32 @@ public class VirtualProvider {
         return this.concurrent;
     }
 
-    public void addInference(long id, long retentionTime) {
-        inferenceRecords.put(id, retentionTime);
-    }
-
-    public volatile long averageRT = 10;
+    public volatile long averageRT = 1;
 
     public long getLatencyThreshold() {
         return Math.max((long) (this.averageRT * 1.5), 10);
     }
 
     public boolean tryRequireConcurrent() {
-        //logger.info("remain: {}", remainThreadCount);
-        return remainThreadCount > 0;
         //return true;
+        return inflight.get() < concurrentLimitProcessor.getInflightBound();
     }
 
-
-    public void restart() {
-        if (ProviderStatus.AVAILABLE.equals(this.status)) return;
-
-        this.imperium.set(0);
-        this.errorStamp.clear();
-        this.init();
-        this.status = ProviderStatus.AVAILABLE;
+    public void onComputed(long latency, int lastComputed) {
+        long RTT = Math.max(latency, 1);
+        double computingRate = (double) (computed.incrementAndGet() - lastComputed) * 72 / RTT;
+        //logger.info("computingRate: {} inflight bound: {} RTT: {} average RT: {}", computingRate, concurrentLimitProcessor.getInflightBound(), RTT, this.averageRT);
+        this.concurrentLimitProcessor.onACK(RTT, this.averageRT, computingRate);
+        this.recordLatency(latency);
     }
 
     public boolean hasImperium() {
         return imperium.get() > 0;
     }
 
-    public void currentLimit() {
-        this.status = ProviderStatus.UNAVAILABLE;
-    }
-
-    private void crush() {
-        this.status = ProviderStatus.UNAVAILABLE;
-        Supervisor.notifyCrash(this.port);
-    }
 
     public void executeImperium() {
         imperium.decrementAndGet();
-    }
-
-    private Set<Long> correctId = new HashSet<>();
-
-    public synchronized void recordTimeoutRequestId(long id) {
-        if (inferenceRecords.containsKey(id)) correctId.add(id);
-        timeoutRequests.add(Optional.ofNullable(inferenceRecords.get(id)).orElse(5000L));
-        //recordTimeout();
-    }
-
-    private void printInferenceProbability() {
-        System.out.println("time out num: " + timeoutRequests.size() + " correct num: " + correctId.size() + " correct radio: " + ((double) correctId.size() / inferenceRecords.keySet().size()));
-        int errorT = 0;
-        int correctT = 0;
-        for (Long inferenceId : inferenceRecords.keySet()) {
-            long inferenceTime = inferenceRecords.get(inferenceId);
-            if (!correctId.contains(inferenceId))
-                errorT += inferenceTime;
-            else
-                correctT += 5000 - inferenceTime;
-        }
-        System.out.println("save time: " + (correctT - errorT));
-    }
-
-    public double getTimeoutInferenceProbability(long retentionTime) {
-        if (timeoutRequests.isEmpty()) return 0;
-        int num = 0;
-        for (Long time : timeoutRequests) {
-            if (time >= retentionTime) ++num;
-        }
-        return (double) num / timeoutRequests.size();
     }
 
     public double getRTWeight() {
@@ -217,9 +172,6 @@ public class VirtualProvider {
         errorStamp.addLast(now);
     }
 
-    public int getRecentErrorSize() {
-        return errorStamp.size();
-    }
 
     public double getCdf(long retentionTime) {
         return Math.exp(-currentLambda * retentionTime);

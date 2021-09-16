@@ -8,18 +8,15 @@ import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
 
-    private final long id;
-
     private final int port;
 
     private final Future<T> future;
 
     private final long boxingTime;
 
-    public FutureFlow(Future<T> future, int port, long id) {
+    public FutureFlow(Future<T> future, int port) {
         this.future = future;
         this.port = port;
-        this.id = id;
         this.boxingTime = System.currentTimeMillis();
     }
 
@@ -33,10 +30,6 @@ public class FutureFlow<T> {
 
     public void forceTimeout() {
         ((CompletableFuture<T>) future).completeExceptionally(new RpcException("force timeout"));
-    }
-
-    public long getId() {
-        return id;
     }
 
     public int getPort() {

@@ -48,9 +48,9 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //       logger.info("latencyThreshold: {} concurrent: {} ", latencyThreshold, concurrent.get());
         Thread thread = Thread.currentThread();
         scheduledExecutorService.schedule(thread::interrupt, latencyThreshold, TimeUnit.MILLISECONDS);
-        //long startTime = System.currentTimeMillis();
+        //long startTime = System.nanoTime();
         Result result = invoker.invoke(invocation);
-        //long costTime = System.currentTimeMillis() - startTime;
+        //long costTime = System.nanoTime() - startTime;
         return result;
     }
 
@@ -70,7 +70,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(maxThreadCount - (int) Math.sqrt(maxThreadCount)));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(remainThreadCount));
         //appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
-        //appResponse.setAttachment(AttachmentKey.INVOKE_ID, invocation.getAttachment(AttachmentKey.INVOKE_ID));
     }
 
     @Override
