@@ -19,7 +19,7 @@ public class Supervisor {
     private static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
 
     private static final Set<VirtualProvider> availableVirtualProviders = new ConcurrentHashSet<>();
-    
+
     public static boolean isOutOfService() {
         return availableVirtualProviders.isEmpty();
     }

@@ -26,19 +26,22 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-
-        if (virtualProvider.tryRequireConcurrent()) {
+        //logger.info("inflight: {}", virtualProvider.inflight);
+        while (!virtualProvider.tryRequireConcurrent()) ;
+        if (true || virtualProvider.tryRequireConcurrent()) {
             virtualProvider.inflight.incrementAndGet();
+
             int lastComputed = virtualProvider.computed.get();
             invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
-            long startTime = System.currentTimeMillis();
+            long startTime = System.nanoTime();
             return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //                logger.info("inflight: {}", virtualProvider.inflight.decrementAndGet());
-                virtualProvider.computed.incrementAndGet();
+                //virtualProvider.computed.incrementAndGet();
                 virtualProvider.inflight.decrementAndGet();
+                long latency = System.nanoTime() - startTime;
                 if (t == null) {
-                    long latency = System.currentTimeMillis() - startTime;
                     virtualProvider.onComputed(latency, lastComputed);
+                    //logger.info("lastComputed: {} nowComputed: {} diff: {}", lastComputed, virtualProvider.computed.incrementAndGet(),(c));
                     //logger.info("latency: {} RTprop: {}", latency / (int) 1e6, (latency - executeElapse) / (int) 1e6);
                     //virtualProvider.recordLatency(latency * (int) 1e6);
                 }
@@ -50,19 +53,19 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-//        int port = invoker.getUrl().getPort();
-//        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-//        virtualProvider.setConcurrent(concurrent);
+        int port = invoker.getUrl().getPort();
+        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+        int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
+        virtualProvider.setConcurrent(concurrent);
 //        virtualProvider.setRemainThreadCount(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
 //        virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-//        int port = invoker.getUrl().getPort();
-//        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-
+        int port = invoker.getUrl().getPort();
+        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+        virtualProvider.computed.incrementAndGet();
 //        if (!t.getMessage().contains("force timeout") && !t.getMessage().contains("Unexpected exception")) {
 //            virtualProvider.recordError();
 //        }

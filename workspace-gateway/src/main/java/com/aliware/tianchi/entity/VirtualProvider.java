@@ -53,7 +53,7 @@ public class VirtualProvider {
 
     public AtomicInteger inflight = new AtomicInteger();
 
-    private final ConcurrentLimitProcessor concurrentLimitProcessor;
+    private ConcurrentLimitProcessor concurrentLimitProcessor;
 
     private final double SAMPLE_FACTOR = 0.99;
 
@@ -65,11 +65,14 @@ public class VirtualProvider {
         this.port = port;
         this.threads = threads;
         this.remainThreadCount = threads;
-        this.concurrent = threads - (int) Math.sqrt(threads);
+        this.concurrent = threads;
         this.threadFactor = threads / 10d;
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
-        this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
+        if (port == 20870) {
+            this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
+        }
+
         this.init();
     }
 
@@ -105,16 +108,24 @@ public class VirtualProvider {
     }
 
     public boolean tryRequireConcurrent() {
+        //return inflight.get() < 5000;
         //return true;
+        //       logger.info("bound: {}", concurrentLimitProcessor.getInflightBound());
         return inflight.get() < concurrentLimitProcessor.getInflightBound();
     }
 
+
     public void onComputed(long latency, int lastComputed) {
-        long RTT = Math.max(latency, 1);
-        double computingRate = (double) (computed.incrementAndGet() - lastComputed) * 72 / RTT;
-        //logger.info("computingRate: {} inflight bound: {} RTT: {} average RT: {}", computingRate, concurrentLimitProcessor.getInflightBound(), RTT, this.averageRT);
+        //long RTT = Math.max(latency, 1);
+        double RTT = latency / 1e6;
+        double computedDiff = (computed.incrementAndGet() - lastComputed) / RTT;
+        //       concurrentLimitProcessor.onComputed(computedDiff);
+        double computingRate = computedDiff * 1e6 / latency;
+        //logger.info("computed diff: {}", computed.get() - lastComputed);
+        //logger.info("computingRate: {} inflight: {} bound: {} RT: {}", computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), latency / 1e6);
         this.concurrentLimitProcessor.onACK(RTT, this.averageRT, computingRate);
-        this.recordLatency(latency);
+        this.recordLatency(latency / (int) 1e6);
+
     }
 
     public boolean hasImperium() {

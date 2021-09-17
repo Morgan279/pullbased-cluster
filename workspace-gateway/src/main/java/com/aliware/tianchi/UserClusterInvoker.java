@@ -16,7 +16,7 @@ import java.util.List;
  * 选手需要基于此类实现自己的集群调度算法
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
-    
+
     private final TimeoutProcessor<T> timeoutProcessor;
 
     public UserClusterInvoker(Directory<T> directory) {
