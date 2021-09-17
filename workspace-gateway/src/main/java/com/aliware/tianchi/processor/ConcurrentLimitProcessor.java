@@ -18,7 +18,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int WB_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.001, 0.999, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -54,7 +54,7 @@ public class ConcurrentLimitProcessor {
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("sampling-timer", true));
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 43, WR, WR, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
     }
 
 
