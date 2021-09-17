@@ -23,12 +23,14 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
 
     @Override
-    @SuppressWarnings("StatementWithEmptyBody")
+//    @SuppressWarnings("StatementWithEmptyBody")
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        while (virtualProvider.isConcurrentLimited()) ;
+        while (virtualProvider.isConcurrentLimited()) {
+            Thread.yield();
+        }
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
