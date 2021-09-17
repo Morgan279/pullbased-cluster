@@ -28,27 +28,25 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
         //logger.info("inflight: {}", virtualProvider.inflight);
         while (!virtualProvider.tryRequireConcurrent()) ;
-        if (true || virtualProvider.tryRequireConcurrent()) {
-            virtualProvider.inflight.incrementAndGet();
 
-            int lastComputed = virtualProvider.computed.get();
-            invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
-            long startTime = System.nanoTime();
-            return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+        virtualProvider.inflight.incrementAndGet();
+        int lastComputed = virtualProvider.computed.get();
+        invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
+        long startTime = System.nanoTime();
+        return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //                logger.info("inflight: {}", virtualProvider.inflight.decrementAndGet());
-                //virtualProvider.computed.incrementAndGet();
-                virtualProvider.inflight.decrementAndGet();
-                long latency = System.nanoTime() - startTime;
-                if (t == null) {
-                    virtualProvider.onComputed(latency, lastComputed);
-                    //logger.info("lastComputed: {} nowComputed: {} diff: {}", lastComputed, virtualProvider.computed.incrementAndGet(),(c));
-                    //logger.info("latency: {} RTprop: {}", latency / (int) 1e6, (latency - executeElapse) / (int) 1e6);
-                    //virtualProvider.recordLatency(latency * (int) 1e6);
-                }
-            });
-        }
+            //virtualProvider.computed.incrementAndGet();
+            virtualProvider.inflight.decrementAndGet();
+            long latency = System.nanoTime() - startTime;
+            if (t == null) {
+                virtualProvider.onComputed(latency, lastComputed);
+                //logger.info("lastComputed: {} nowComputed: {} diff: {}", lastComputed, virtualProvider.computed.incrementAndGet(),(c));
+                //logger.info("latency: {} RTprop: {}", latency / (int) 1e6, (latency - executeElapse) / (int) 1e6);
+                //virtualProvider.recordLatency(latency * (int) 1e6);
+            }
+        });
 
-        throw new RpcException("Work request exceeds limitation");
+        //throw new RpcException("Work request exceeds limitation");
     }
 
     @Override

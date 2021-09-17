@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,11 +44,14 @@ public class UserLoadBalance implements LoadBalance {
 
     private final int[] RandomWeightArray = {7, 4, 3};
 
+    private final AtomicInteger roundCounter = new AtomicInteger(0);
+
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        Invoker<T> selected = invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-        //logger.info("selected: {}", selected.getUrl().getPort());
-        return selected;
+        return invokers.get(roundCounter.getAndIncrement() % invokers.size());
+//        Invoker<T> selected = invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+//        //logger.info("selected: {}", selected.getUrl().getPort());
+//        return selected;
 //        return MaxWeightDispatchProcessor.select(invokers);
 //
 //        for (Invoker<T> invoker : invokers) {
