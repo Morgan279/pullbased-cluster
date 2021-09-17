@@ -14,11 +14,11 @@ public class ConcurrentLimitProcessor {
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
 
-    private static final long WR = 30;
+    private static final long WR = 10;
 
     private static final int WB_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.001, 0.999, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
