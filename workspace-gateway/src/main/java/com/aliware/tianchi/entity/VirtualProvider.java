@@ -69,10 +69,7 @@ public class VirtualProvider {
         this.threadFactor = threads / 10d;
         this.errorStamp = new ArrayDeque<>();
         this.imperium = new AtomicInteger();
-        if (port == 20870) {
-            this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
-        }
-
+        this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         this.init();
     }
 
