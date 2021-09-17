@@ -7,12 +7,10 @@ import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oshi.SystemInfo;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 服务端过滤器
@@ -23,25 +21,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Activate(group = CommonConstants.PROVIDER)
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
-    private static final SystemInfo SYSTEM_INFO;
-
-    private static final int INIT_TOTAL_THREAD_COUNT;
-
-    private static final AtomicInteger concurrent = new AtomicInteger();
-
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
-    static {
-        SYSTEM_INFO = new SystemInfo();
-        INIT_TOTAL_THREAD_COUNT = SYSTEM_INFO.getOperatingSystem().getThreadCount();
-    }
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int latencyThreshold = Integer.parseInt(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD));
-        concurrent.incrementAndGet();
+        //       concurrent.incrementAndGet();
         //       logger.info("latencyThreshold: {} concurrent: {} ", latencyThreshold, concurrent.get());
         Thread thread = Thread.currentThread();
         scheduledExecutorService.schedule(thread::interrupt, latencyThreshold, TimeUnit.MILLISECONDS);
@@ -63,7 +51,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 //        double threadFactor = (double) maxThreadCount / Math.max(1, totalThreadCount - INIT_TOTAL_THREAD_COUNT);
         //System.out.println("concurrent: " + concurrent.get());
         //LOGGER.info("max: " + maxThreadCount + " total: " + totalThreadCount + " init: " + INIT_TOTAL_THREAD_COUNT + " factor: " + threadFactor);
-        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.decrementAndGet()));
+//        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrent.decrementAndGet()));
 //        appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(remainThreadCount));
         //appResponse.setAttachment(AttachmentKey.THREAD_FACTOR, String.valueOf(threadFactor));
     }
@@ -71,6 +59,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
 //        logger.error("err: {}", t.getMessage());
-        concurrent.decrementAndGet();
+//        concurrent.decrementAndGet();
     }
 }
