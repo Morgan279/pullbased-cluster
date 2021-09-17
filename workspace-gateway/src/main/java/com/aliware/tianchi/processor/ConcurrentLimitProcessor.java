@@ -14,7 +14,7 @@ public class ConcurrentLimitProcessor {
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
 
-    private static final long WR = 50;
+    private static final long WR = 10;
 
     private static final int WB_FACTOR = 6;
 
@@ -48,7 +48,7 @@ public class ConcurrentLimitProcessor {
         this.threads = threads;
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
-        this.RTPropEstimated = threads / 100d;
+        this.RTPropEstimated = threads / 1000d;
         this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimate = threads;
         this.lastComputingRate = computingRateEstimate;

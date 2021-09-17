@@ -63,7 +63,7 @@ public class VirtualProvider {
         this.remainThreadCount = threads;
         this.concurrent = threads;
         this.threadFactor = threads / 10d;
-        this.N = threads * Config.SAMPLING_COUNT_BASE;
+        this.N = threads & Config.SAMPLING_COUNT_BASE;
         this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
         this.errorStamp = new ArrayDeque<>();

@@ -30,9 +30,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         while (virtualProvider.isConcurrentLimited()) ;
 
-        virtualProvider.inflight.incrementAndGet();
-        int lastComputed = virtualProvider.computed.get();
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
+        int lastComputed = virtualProvider.computed.get();
+        virtualProvider.inflight.incrementAndGet();
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.inflight.decrementAndGet();
