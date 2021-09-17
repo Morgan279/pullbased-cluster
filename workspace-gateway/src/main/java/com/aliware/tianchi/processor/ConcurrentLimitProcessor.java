@@ -18,7 +18,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int WB_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.001, 0.999, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.005, 0.995, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
