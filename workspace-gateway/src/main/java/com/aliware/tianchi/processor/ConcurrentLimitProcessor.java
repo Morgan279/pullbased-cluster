@@ -14,11 +14,11 @@ public class ConcurrentLimitProcessor {
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
 
-    private static final long WR = 10;
+    private static final long WR = 30;
 
     private static final int WB_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.11, 0.9, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.001, 0.999, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -44,7 +44,6 @@ public class ConcurrentLimitProcessor {
 
     public ConcurrentLimitProcessor(int threads) {
         this.gain = 2 / Math.log(2);
-
         this.threads = threads;
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
@@ -60,7 +59,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 30);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 28);
     }
 
 
