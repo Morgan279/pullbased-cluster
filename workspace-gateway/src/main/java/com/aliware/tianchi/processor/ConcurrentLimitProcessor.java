@@ -54,7 +54,7 @@ public class ConcurrentLimitProcessor {
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("sampling-timer", true));
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 40, WR, WR, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 50, WR, WR, TimeUnit.MILLISECONDS);
     }
 
 
