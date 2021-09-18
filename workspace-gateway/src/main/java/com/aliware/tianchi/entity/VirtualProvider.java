@@ -20,6 +20,8 @@ public class VirtualProvider {
 
     public final AtomicInteger inflight;
 
+    public final AtomicInteger waiting;
+
     private final int SAMPLING_COUNT;
 
     private final int port;
@@ -39,6 +41,7 @@ public class VirtualProvider {
         this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
+        this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
     }
 

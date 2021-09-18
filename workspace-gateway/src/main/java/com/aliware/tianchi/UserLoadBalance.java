@@ -1,5 +1,7 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.entity.Supervisor;
+import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
@@ -25,7 +27,20 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+
+        int minWaiting = Integer.MAX_VALUE;
+        Invoker<T> minWaitingInvoker = null;
+
+        for (Invoker<T> invoker : invokers) {
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            if (virtualProvider.waiting.get() < minWaiting) {
+                minWaiting = virtualProvider.waiting.get();
+                minWaitingInvoker = invoker;
+            }
+        }
+
+        return minWaitingInvoker;
+        //return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
     }
 
 
