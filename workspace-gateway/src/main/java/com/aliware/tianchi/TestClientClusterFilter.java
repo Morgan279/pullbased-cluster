@@ -13,17 +13,9 @@ import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listener {
-    
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        //若没有可用的provider 则在选址前拦截请求
-//        if (Supervisor.isOutOfService()) {
-//            throw new RpcException("Temporarily out of service");
-//        }
-//        if (counter.get() < 1) {
-//            throw new RpcException("Temporarily out of service");
-//        }
-//        counter.decrementAndGet();
         RpcInvocation inv = (RpcInvocation) invocation;
         inv.setInvokeMode(InvokeMode.FUTURE);
         return invoker.invoke(inv);

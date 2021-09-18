@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
-    
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
@@ -32,42 +32,25 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
         virtualProvider.inflight.incrementAndGet();
+
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.inflight.decrementAndGet();
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
                 virtualProvider.onComputed(latency, lastComputed);
-                //logger.info("lastComputed: {} nowComputed: {} diff: {}", lastComputed, virtualProvider.computed.incrementAndGet(),(c));
-                //logger.info("latency: {} RTprop: {}", latency / (int) 1e6, (latency - executeElapse) / (int) 1e6);
-                //virtualProvider.recordLatency(latency * (int) 1e6);
             }
         });
 
-        //throw new RpcException("Work request exceeds limitation");
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-//        int port = invoker.getUrl().getPort();
-//        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        int concurrent = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-//        virtualProvider.setConcurrent(concurrent);
-//        virtualProvider.setRemainThreadCount(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
-//        virtualProvider.setThreadFactor(Double.parseDouble(appResponse.getAttachment(AttachmentKey.THREAD_FACTOR)));
+
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-//        int port = invoker.getUrl().getPort();
-//        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        virtualProvider.computed.incrementAndGet();
-//        if (!t.getMessage().contains("force timeout") && !t.getMessage().contains("Unexpected exception")) {
-//            virtualProvider.recordError();
-//        }
-//        else if (t.getMessage().contains("thread pool is exhausted")) {
-//            virtualProvider.currentLimiter.set(virtualProvider.currentLimiter.get() - 100);
-//        }
-        //System.out.println("TestClientFilter error: " + t.getMessage());
+
     }
 }

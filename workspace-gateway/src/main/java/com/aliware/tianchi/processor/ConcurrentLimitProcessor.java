@@ -13,7 +13,6 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-
     private static final long WR = 10;
 
     private static final int WB_FACTOR = 6;

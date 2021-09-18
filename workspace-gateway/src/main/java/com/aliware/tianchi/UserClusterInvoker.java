@@ -23,9 +23,6 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
         super(directory);
         this.timeoutProcessor = new TimeoutProcessor<>();
         for (Invoker<T> invoker : directory.getAllInvokers()) {
-//            for (String key : invoker.getUrl().getParameters().keySet()) {
-//                System.out.println("key: " + key + " value: " + invoker.getUrl().getParameter(key));
-//            }
             Supervisor.registerProvider(invoker);
         }
     }
