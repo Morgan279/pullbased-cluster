@@ -18,12 +18,9 @@ import org.slf4j.LoggerFactory;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
-    //private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("record-timer", true));
     private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
-
-
+    
     @Override
-//    @SuppressWarnings("StatementWithEmptyBody")
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
