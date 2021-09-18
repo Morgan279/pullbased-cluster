@@ -37,7 +37,7 @@ public class ConcurrentLimitProcessor {
 
     private volatile double computingRateEstimate;
 
-    public AtomicInteger roundCounter;
+    private final AtomicInteger roundCounter;
 
     private final int threads;
 

@@ -21,7 +21,6 @@ public class UserLoadBalance implements LoadBalance {
 
     private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
 
-
     private final AtomicInteger ROUND_COUNTER = new AtomicInteger(0);
 
     @Override

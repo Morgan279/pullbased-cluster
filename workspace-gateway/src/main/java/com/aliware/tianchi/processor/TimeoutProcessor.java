@@ -30,7 +30,9 @@ public class TimeoutProcessor<T> implements Runnable {
                 VirtualProvider virtualProvider = Supervisor.getVirtualProvider(futureFlow.getPort());
                 if (futureFlow.getRetentionTime() > virtualProvider.getLatencyThreshold()) {
                     futureFlow.forceTimeout();
-                } else futureFlowQueue.add(futureFlow);
+                } else {
+                    futureFlowQueue.add(futureFlow);
+                }
             }
         }
     }

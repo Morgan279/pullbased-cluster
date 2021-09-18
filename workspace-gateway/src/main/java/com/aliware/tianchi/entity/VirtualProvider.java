@@ -29,7 +29,7 @@ public class VirtualProvider {
     private int counter;
 
     private long sum;
-    
+
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -58,7 +58,7 @@ public class VirtualProvider {
 
     }
 
-    public synchronized void recordLatency(long latency) {
+    private synchronized void recordLatency(long latency) {
         sum += latency;
         ++counter;
         if (counter == SAMPLING_COUNT) {
