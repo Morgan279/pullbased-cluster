@@ -24,27 +24,22 @@ public class VirtualProvider {
 
     private final int port;
 
+    private final ConcurrentLimitProcessor concurrentLimitProcessor;
+
     private int counter;
 
     private long sum;
-
-    private final ConcurrentLimitProcessor concurrentLimitProcessor;
-
-
+    
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
+        this.sum = 0;
+        this.counter = 0;
         this.SAMPLING_COUNT = Config.SAMPLING_COUNT;
+        this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
-        this.init();
-    }
-
-    private void init() {
-        this.sum = 0;
-        this.counter = 0;
-        this.averageRTT = Config.INITIAL_AVERAGE_RTT;
     }
 
     public long getLatencyThreshold() {
