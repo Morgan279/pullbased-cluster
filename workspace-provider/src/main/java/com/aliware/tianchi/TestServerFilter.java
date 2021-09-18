@@ -28,7 +28,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        int latencyThreshold = Integer.parseInt(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD));
+        int latencyThreshold = (int)(Integer.parseInt(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD)) * 0.9);
         //       concurrent.incrementAndGet();
         //       logger.info("latencyThreshold: {} concurrent: {} ", latencyThreshold, concurrent.get());
         Thread thread = Thread.currentThread();
