@@ -60,7 +60,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
-                this.gain = 0.01;
+                this.gain = 0.001;
                 this.status = ConcurrentLimitStatus.DRAIN;
                 scheduledExecutorService.schedule(() -> {
                     int round;
@@ -70,9 +70,9 @@ public class ConcurrentLimitProcessor {
                     roundCounter.set(round);
                     this.congestion = true;
                     this.status = ConcurrentLimitStatus.PROBE;
-                }, 4, TimeUnit.MILLISECONDS);
+                }, 2, TimeUnit.MILLISECONDS);
             }
-        }, 1000, 200, TimeUnit.MILLISECONDS);
+        }, 1000, 100, TimeUnit.MILLISECONDS);
     }
 
 

@@ -21,14 +21,14 @@ import java.util.concurrent.TimeUnit;
 @Activate(group = CommonConstants.PROVIDER)
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(32, new NamedInternalThreadFactory("timeout-timer", true));
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(100, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        int latencyThreshold = (int)(Integer.parseInt(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD)) * 0.9);
+        int latencyThreshold = Integer.parseInt(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD));
         //       concurrent.incrementAndGet();
         //       logger.info("latencyThreshold: {} concurrent: {} ", latencyThreshold, concurrent.get());
         Thread thread = Thread.currentThread();
