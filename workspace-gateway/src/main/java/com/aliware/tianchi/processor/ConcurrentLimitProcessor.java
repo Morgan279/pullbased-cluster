@@ -39,6 +39,8 @@ public class ConcurrentLimitProcessor {
 
     private final AtomicInteger roundCounter;
 
+    private volatile boolean congestion;
+
     private final int threads;
 
     public ConcurrentLimitProcessor(int threads) {
@@ -46,6 +48,7 @@ public class ConcurrentLimitProcessor {
         this.threads = threads;
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
+        this.congestion = false;
         this.RTPropEstimated = threads / 1000d;
         this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimate = threads;
@@ -54,11 +57,17 @@ public class ConcurrentLimitProcessor {
         this.lastPhaseStartedTime = System.currentTimeMillis();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("sampling-timer", true));
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            if (congestion) {
+//                this.gain = 0.01;
+//                this.status = ConcurrentLimitStatus.DRAIN;
+//            }
+//        }, 5000, 500, TimeUnit.MILLISECONDS);
     }
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 30);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 64);
     }
 
 
@@ -88,11 +97,11 @@ public class ConcurrentLimitProcessor {
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
             now = System.currentTimeMillis();
-            if (now - lastSamplingTime > WB_FACTOR * averageRT) {
+            if (now - lastSamplingTime > WB_FACTOR * averageRT && computingRate > computingRateEstimate) {
+                computingRateEstimate = computingRate;
+                congestion = false;
                 lastSamplingTime = now;
-                computingRateEstimate = -1;
             }
-            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
         }
 
         lastRTPropEstimated = RTPropEstimated;
