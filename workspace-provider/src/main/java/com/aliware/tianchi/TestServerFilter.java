@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Activate(group = CommonConstants.PROVIDER)
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(100, new NamedInternalThreadFactory("timeout-timer", true));
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(16, new NamedInternalThreadFactory("timeout-timer", true));
 
     private final static Logger logger = LoggerFactory.getLogger(TestServerFilter.class);
 
