@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,17 +58,26 @@ public class ConcurrentLimitProcessor {
         this.lastPhaseStartedTime = System.currentTimeMillis();
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("sampling-timer", true));
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
-//        scheduledExecutorService.scheduleAtFixedRate(() -> {
-//            if (congestion) {
-//                this.gain = 0.01;
-//                this.status = ConcurrentLimitStatus.DRAIN;
-//            }
-//        }, 5000, 500, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            if (congestion) {
+                this.gain = 0.01;
+                this.status = ConcurrentLimitStatus.DRAIN;
+                scheduledExecutorService.schedule(() -> {
+                    int round;
+                    do {
+                        round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
+                    } while (round == 1);
+                    roundCounter.set(round);
+                    this.congestion = true;
+                    this.status = ConcurrentLimitStatus.PROBE;
+                }, 10, TimeUnit.MILLISECONDS);
+            }
+        }, 5000, 100, TimeUnit.MILLISECONDS);
     }
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 64);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 32);
     }
 
 
@@ -75,15 +85,17 @@ public class ConcurrentLimitProcessor {
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, averageRT, computingRate);
-                return;
+                break;
 
             case START_UP:
                 this.handleStartup(computingRate);
-                return;
+                break;
 
             case DRAIN:
-                this.handleDrain();
+                this.handleDrain(RTT);
         }
+
+
     }
 
     public void handleProbe(double RTT, long averageRT, double computingRate) {
@@ -120,8 +132,10 @@ public class ConcurrentLimitProcessor {
 //        }
     }
 
-    private void handleDrain() {
-
+    private void handleDrain(double RTT) {
+        synchronized (UPDATE_LOCK) {
+            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+        }
     }
 
     private enum ConcurrentLimitStatus {
