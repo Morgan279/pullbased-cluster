@@ -70,9 +70,9 @@ public class ConcurrentLimitProcessor {
                     roundCounter.set(round);
                     this.congestion = true;
                     this.status = ConcurrentLimitStatus.PROBE;
-                }, 20, TimeUnit.MILLISECONDS);
+                }, 2, TimeUnit.MILLISECONDS);
             }
-        }, 1000, 1000, TimeUnit.MILLISECONDS);
+        }, 1000, 100, TimeUnit.MILLISECONDS);
     }
 
 
