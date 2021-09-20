@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,11 +62,11 @@ public class ConcurrentLimitProcessor {
                 this.gain = 0.1;
                 this.status = ConcurrentLimitStatus.DRAIN;
                 scheduledExecutorService.schedule(() -> {
-                    int round;
-                    do {
-                        round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
-                    } while (round == 1);
-                    roundCounter.set(round);
+//                    int round;
+//                    do {
+//                        round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
+//                    } while (round == 1);
+                    roundCounter.set(0);
                     this.congestion = true;
                     this.status = ConcurrentLimitStatus.PROBE;
                 }, 4, TimeUnit.MILLISECONDS);
