@@ -60,7 +60,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
-                this.gain = 0.099;
+                this.gain = 0.11;
                 this.status = ConcurrentLimitStatus.DRAIN;
                 scheduledExecutorService.schedule(() -> {
                     int round;
