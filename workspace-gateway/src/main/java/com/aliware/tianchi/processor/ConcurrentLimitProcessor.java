@@ -19,9 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = Config.COMPUTING_RATE_WINDOW_FACTOR;
 
-    private static final int INFLIGHT_BOUND_FACTOR = Config.INFLIGHT_BOUND_FACTOR;
-
-    private static final double[] GAIN_VALUES = Config.GAIN_VALUES;
+    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -58,7 +56,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * INFLIGHT_BOUND_FACTOR);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 32);
     }
 
 
