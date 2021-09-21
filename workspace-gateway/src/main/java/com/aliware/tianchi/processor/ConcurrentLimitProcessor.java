@@ -60,7 +60,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, WR, WR, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
-                this.gain = 0.11;
+                this.gain = 0.1;
                 this.status = ConcurrentLimitStatus.DRAIN;
                 scheduledExecutorService.schedule(() -> {
                     int round;
@@ -77,7 +77,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 32);
+        return (int) (gain * computingRateEstimate * RTPropEstimated);
     }
 
 
