@@ -1,6 +1,5 @@
 package com.aliware.tianchi.processor;
 
-import com.aliware.tianchi.constant.Config;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +100,7 @@ public class ConcurrentLimitProcessor {
     private void initSchedule() {
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
 
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE, RW, RW, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, RW, RW, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
                 this.gain = 0.1;
