@@ -1,5 +1,6 @@
 package com.aliware.tianchi.processor;
 
+import com.aliware.tianchi.constant.Config;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +15,9 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private static final long RW = 10;
+    private static final long RW = Config.RT_TIME_WINDOW;
 
-    private static final int CW_FACTOR = 6;
+    private static final int CW_FACTOR = Config.COMPUTING_RATE_WINDOW_FACTOR;
 
     private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
@@ -100,10 +101,10 @@ public class ConcurrentLimitProcessor {
     private void initSchedule() {
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
 
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = 44, RW, RW, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE, RW, RW, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
-                this.gain = 0.1;
+                this.gain = Config.DRAIN_GAIN;
                 this.status = ConcurrentLimitStatus.DRAIN;
 
                 scheduledExecutorService.schedule(() -> {
@@ -115,10 +116,10 @@ public class ConcurrentLimitProcessor {
 
                     this.congestion = true;
                     this.status = ConcurrentLimitStatus.PROBE;
-                }, 4, TimeUnit.MILLISECONDS);
+                }, Config.DRAIN_INTERVAL, TimeUnit.MILLISECONDS);
 
             }
-        }, 1000, 100, TimeUnit.MILLISECONDS);
+        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private enum ConcurrentLimitStatus {
