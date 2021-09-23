@@ -17,7 +17,7 @@ public class ConcurrentLimitProcessor {
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
-    private static final int CW_FACTOR = Config.COMPUTING_RATE_WINDOW_FACTOR;
+    private static final int CW_FACTOR = 8;
 
     private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
