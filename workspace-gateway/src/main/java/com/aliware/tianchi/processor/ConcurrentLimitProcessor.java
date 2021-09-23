@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = Config.COMPUTING_RATE_WINDOW_FACTOR;
 
-    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1.01, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
