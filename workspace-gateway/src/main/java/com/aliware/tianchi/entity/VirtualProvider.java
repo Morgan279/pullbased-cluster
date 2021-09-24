@@ -53,9 +53,11 @@ public class VirtualProvider {
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
         double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
+        if (RTT < 1) {
+            this.concurrentLimitProcessor.switchFillUp();
+        }
         this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
         this.recordLatency(latency / (int) 1e6);
-
     }
 
     private synchronized void recordLatency(long latency) {
@@ -68,6 +70,10 @@ public class VirtualProvider {
         }
     }
 
+
+    public void switchDrain() {
+        this.concurrentLimitProcessor.switchDrain();
+    }
 
     public int getPort() {
         return this.port;

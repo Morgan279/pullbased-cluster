@@ -15,6 +15,8 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
+    ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
+
     private static final long RW = Config.RT_TIME_WINDOW;
 
     private static final int CW_FACTOR = 8;
@@ -66,9 +68,48 @@ public class ConcurrentLimitProcessor {
                 this.handleProbe(RTT, averageRT, computingRate);
                 return;
 
+            case FILL_UP:
+                this.handleFillUp(RTT);
+                return;
+
             case DRAIN:
                 this.handleDrain(computingRate);
         }
+    }
+
+    public void switchDrain() {
+        if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
+
+        this.status = ConcurrentLimitStatus.DRAIN;
+        this.gain = 0.1;
+
+
+        scheduledExecutorService.schedule(() -> {
+            int round;
+            do {
+                round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
+            } while (round == 1);
+            roundCounter.set(round);
+
+            this.congestion = true;
+            this.status = ConcurrentLimitStatus.PROBE;
+        }, Config.DRAIN_INTERVAL, TimeUnit.MILLISECONDS);
+    }
+
+    public void switchFillUp() {
+        if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
+
+        this.status = ConcurrentLimitStatus.FILL_UP;
+        this.gain = 1.1;
+
+        scheduledExecutorService.schedule(() -> {
+//            int round;
+//            do {
+//                round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
+//            } while (round == 1);
+            roundCounter.set(1);
+            this.status = ConcurrentLimitStatus.PROBE;
+        }, 2, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
@@ -91,6 +132,11 @@ public class ConcurrentLimitProcessor {
 
     }
 
+    private void handleFillUp(double RTT) {
+        synchronized (UPDATE_LOCK) {
+            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+        }
+    }
 
     private void handleDrain(double computingRate) {
         synchronized (UPDATE_LOCK) {
@@ -99,31 +145,17 @@ public class ConcurrentLimitProcessor {
     }
 
     private void initSchedule() {
-        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
-
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE, RW, RW, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
-                this.gain = Config.DRAIN_GAIN;
-                this.status = ConcurrentLimitStatus.DRAIN;
-
-                scheduledExecutorService.schedule(() -> {
-                    int round;
-                    do {
-                        round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
-                    } while (round == 1);
-                    roundCounter.set(round);
-
-                    this.congestion = true;
-                    this.status = ConcurrentLimitStatus.PROBE;
-                }, Config.DRAIN_INTERVAL, TimeUnit.MILLISECONDS);
-
+                this.switchDrain();
             }
         }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private enum ConcurrentLimitStatus {
         DRAIN,
+        FILL_UP,
         PROBE;
     }
 }
