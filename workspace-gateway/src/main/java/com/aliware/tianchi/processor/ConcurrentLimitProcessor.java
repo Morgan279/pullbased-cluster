@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
-    private static final int CW_FACTOR = 8;
+    private static final int CW_FACTOR = 4;
 
     private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
@@ -103,13 +103,9 @@ public class ConcurrentLimitProcessor {
         this.gain = 1.1;
 
         scheduledExecutorService.schedule(() -> {
-//            int round;
-//            do {
-//                round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
-//            } while (round == 1);
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 2, TimeUnit.MILLISECONDS);
+        }, 5, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
@@ -133,15 +129,17 @@ public class ConcurrentLimitProcessor {
     }
 
     private void handleFillUp(double RTT) {
-        synchronized (UPDATE_LOCK) {
-            RTPropEstimated = Math.min(RTPropEstimated, RTT);
-        }
+        RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//        synchronized (UPDATE_LOCK) {
+//            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//        }
     }
 
     private void handleDrain(double computingRate) {
-        synchronized (UPDATE_LOCK) {
-            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-        }
+        computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+//        synchronized (UPDATE_LOCK) {
+//            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+//        }
     }
 
     private void initSchedule() {
