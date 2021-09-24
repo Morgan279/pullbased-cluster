@@ -46,7 +46,7 @@ public class ConcurrentLimitProcessor {
     public ConcurrentLimitProcessor(int threads) {
         this.gain = 2 / Math.log(2);
         this.threads = threads;
-        this.status = ConcurrentLimitStatus.PROBE;
+        this.status = ConcurrentLimitStatus.FILL_UP;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
         this.RTPropEstimated = threads / 1000d;
@@ -100,12 +100,12 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = 1.1;
+        this.gain = 2;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 5, TimeUnit.MILLISECONDS);
+        }, 2, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
@@ -143,6 +143,7 @@ public class ConcurrentLimitProcessor {
     }
 
     private void initSchedule() {
+        scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 10, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE, RW, RW, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
