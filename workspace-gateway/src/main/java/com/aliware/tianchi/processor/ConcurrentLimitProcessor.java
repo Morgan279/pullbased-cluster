@@ -100,12 +100,12 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = 2;
+        this.gain = 1.1;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 2, TimeUnit.MILLISECONDS);
+        }, 4, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
