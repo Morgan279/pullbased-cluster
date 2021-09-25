@@ -21,7 +21,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 4;
 
-    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {125, 75, 100, 100, 100, 100, 100, 100};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -34,6 +34,8 @@ public class ConcurrentLimitProcessor {
     private long lastSamplingTime;
 
     private volatile double RTPropEstimated;
+
+    private volatile double lastRTPropEstimated;
 
     private volatile double computingRateEstimate;
 
@@ -50,6 +52,7 @@ public class ConcurrentLimitProcessor {
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
         this.RTPropEstimated = threads / 1000d;
+        this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimate = threads;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
@@ -58,11 +61,12 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 1000);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
     public void onACK(double RTT, long averageRT, double computingRate) {
+        lastRTPropEstimated = RTT;
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, averageRT, computingRate);
@@ -81,7 +85,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = Math.log(2) / 2 / 10;
+        this.gain = (Math.log(2) / 2) * 100;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -100,7 +104,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = (2 / Math.log(2)) * 10;
+        this.gain = (2 / Math.log(2)) * 100;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -144,7 +148,11 @@ public class ConcurrentLimitProcessor {
 
     private void initSchedule() {
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 10, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE, RW, RW, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+                RTPropEstimated = lastRTPropEstimated;
+            }
+        }, RW, RW, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (congestion) {
                 this.switchDrain();
