@@ -58,7 +58,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 100);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
@@ -81,7 +81,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = Math.log(2) / 2;
+        this.gain = Math.log(2) / 2 / 10;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -100,12 +100,12 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = 2 / Math.log(2);
+        this.gain = (2 / Math.log(2)) * 10;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 4, TimeUnit.MILLISECONDS);
+        }, 2, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
