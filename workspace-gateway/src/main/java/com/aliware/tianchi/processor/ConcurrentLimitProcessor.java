@@ -81,7 +81,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = 0.1;
+        this.gain = 0.02;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -100,7 +100,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = 1.1;
+        this.gain = 50;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
