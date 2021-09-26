@@ -55,7 +55,7 @@ public class ConcurrentLimitProcessor {
         this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimate = threads;
         this.lastSamplingTime = System.currentTimeMillis();
-        this.lastPhaseStartedTime = System.currentTimeMillis();
+        this.lastPhaseStartedTime = System.nanoTime();
         this.initSchedule();
     }
 
@@ -113,9 +113,9 @@ public class ConcurrentLimitProcessor {
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
-        long now = System.currentTimeMillis();
+        long now = System.nanoTime();
 
-        if (now - lastPhaseStartedTime > 2 * RTPropEstimated) {
+        if ((now - lastPhaseStartedTime) / 1e6 > 1.5 * RTPropEstimated) {
             gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
             lastPhaseStartedTime = now;
         }
