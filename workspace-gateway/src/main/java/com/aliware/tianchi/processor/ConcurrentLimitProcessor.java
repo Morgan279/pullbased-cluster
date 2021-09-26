@@ -19,9 +19,9 @@ public class ConcurrentLimitProcessor {
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
-    private static final int CW_FACTOR = 4;
+    private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {125, 75, 100, 100, 100, 100, 100, 100};
+    private static final double[] GAIN_VALUES = {101, 99, 100, 100, 100, 100, 100, 100};
 
     private final Object UPDATE_LOCK = new Object();
 
