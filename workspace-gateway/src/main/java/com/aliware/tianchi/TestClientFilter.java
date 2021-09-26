@@ -55,5 +55,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             virtualProvider.switchDrain();
         }
+        logger.error("onError", t);
     }
 }
