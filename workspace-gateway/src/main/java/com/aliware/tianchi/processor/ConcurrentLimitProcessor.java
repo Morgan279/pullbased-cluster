@@ -115,7 +115,7 @@ public class ConcurrentLimitProcessor {
     private void handleProbe(double RTT, long averageRT, double computingRate) {
         long now = System.nanoTime();
 
-        if (now - lastPhaseStartedTime > 3 * RTPropEstimated) {
+        if ((now - lastPhaseStartedTime) / 1e6 > 3 * RTPropEstimated) {
             gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
             lastPhaseStartedTime = now;
         }
