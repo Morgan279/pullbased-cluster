@@ -55,13 +55,13 @@ public class ConcurrentLimitProcessor {
         this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimate = threads;
         this.lastSamplingTime = System.currentTimeMillis();
-        this.lastPhaseStartedTime = System.nanoTime();
+        this.lastPhaseStartedTime = System.currentTimeMillis();
         this.initSchedule();
     }
 
 
     public int getInflightBound() {
-        return (int) (gain * 0.9 * computingRateEstimate * RTPropEstimated * threads);
+        return (int) (gain * 0.8 * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
@@ -113,9 +113,9 @@ public class ConcurrentLimitProcessor {
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
-        long now = System.nanoTime();
+        long now = System.currentTimeMillis();
 
-        if ((now - lastPhaseStartedTime) / 1e6 > 3 * RTPropEstimated) {
+        if (now - lastPhaseStartedTime > 2 * RTPropEstimated) {
             gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
             lastPhaseStartedTime = now;
         }
@@ -133,17 +133,17 @@ public class ConcurrentLimitProcessor {
     }
 
     private void handleFillUp(double RTT) {
-        RTPropEstimated = Math.min(RTPropEstimated, RTT);
-//        synchronized (UPDATE_LOCK) {
-//            RTPropEstimated = Math.min(RTPropEstimated, RTT);
-//        }
+//        RTPropEstimated = Math.min(RTPropEstimated, RTT);
+        synchronized (UPDATE_LOCK) {
+            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+        }
     }
 
     private void handleDrain(double computingRate) {
-        computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-//        synchronized (UPDATE_LOCK) {
-//            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-//        }
+//        computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+        synchronized (UPDATE_LOCK) {
+            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+        }
     }
 
     private void initSchedule() {
