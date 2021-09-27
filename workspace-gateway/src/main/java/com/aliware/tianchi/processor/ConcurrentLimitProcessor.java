@@ -21,7 +21,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {130, 80, 100, 100, 100, 100, 100, 100};
+    private static final double[] GAIN_VALUES = {101, 99, 100, 100, 100, 100, 100, 100};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * 0.75 * computingRateEstimate * RTPropEstimated * threads);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
@@ -85,7 +85,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = (Math.log(2) / 2) * 100;
+        this.gain = (Math.log(2) / 2) * 50;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -104,7 +104,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = (2 / Math.log(2)) * 100;
+        this.gain = (2 / Math.log(2)) * 50;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
