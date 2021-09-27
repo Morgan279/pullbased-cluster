@@ -21,7 +21,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {101, 99, 100, 100, 100, 100, 100, 100};
+    private static final double[] GAIN_VALUES = {110, 90, 100, 100, 100, 100, 100, 100};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 1.414);
     }
 
 
