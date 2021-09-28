@@ -109,7 +109,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 2, TimeUnit.MILLISECONDS);
+        }, 4, TimeUnit.MILLISECONDS);
     }
 
     private void handleProbe(double RTT, long averageRT, double computingRate) {
