@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * 50);
     }
 
 
@@ -85,7 +85,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = (Math.log(2) / 2) * 50;
+        this.gain = (Math.log(2) / 2) * 100;
 
 
         scheduledExecutorService.schedule(() -> {
