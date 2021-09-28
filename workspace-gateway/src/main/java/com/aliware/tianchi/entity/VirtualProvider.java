@@ -13,7 +13,7 @@ public class VirtualProvider {
     private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
 
     //private final ScheduledExecutorService scheduledExecutorService;
-    
+
     public final int threads;
 
     public volatile long averageRTT;
@@ -57,12 +57,14 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-        long now = System.nanoTime();
-        if (now - lastSamplingTime > latency) {
-            double computingRate = (computed.get() - lastComputed) / RTT;
-            this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
-            lastSamplingTime = now;
-        }
+        double computingRate = (computed.get() - lastComputed) / RTT;
+        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+//        long now = System.nanoTime();
+//        if (now - lastSamplingTime > latency) {
+//            double computingRate = (computed.get() - lastComputed) / RTT;
+//            this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+//            lastSamplingTime = now;
+//        }
 //        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
 //        if (RTT < 1) {
 //            this.concurrentLimitProcessor.switchFillUp();
