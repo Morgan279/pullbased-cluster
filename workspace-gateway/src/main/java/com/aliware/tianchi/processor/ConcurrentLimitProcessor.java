@@ -104,7 +104,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = (2 / Math.log(2));
+        this.gain = (2 / Math.log(2)) * Math.PI;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
