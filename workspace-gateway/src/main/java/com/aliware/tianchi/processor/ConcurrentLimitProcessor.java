@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * threads * threads);
+        return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
