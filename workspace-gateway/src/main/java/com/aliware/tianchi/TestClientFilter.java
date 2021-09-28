@@ -25,9 +25,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        while (virtualProvider.isConcurrentLimited()) {
-            Thread.yield();
-        }
+//        while (virtualProvider.isConcurrentLimited()) {
+//            Thread.yield();
+//        }
+        while (virtualProvider.isConcurrentLimited()) ;
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
