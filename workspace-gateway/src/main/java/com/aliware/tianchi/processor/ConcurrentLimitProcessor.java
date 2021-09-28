@@ -15,7 +15,7 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * RTPropEstimated * 1000);
+        return (int) (gain * computingRateEstimate * RTPropEstimated * threads);
     }
 
 

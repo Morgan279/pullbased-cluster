@@ -2,15 +2,22 @@ package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
+import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
 
     private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
+
+    private final ScheduledExecutorService scheduledExecutorService;
+
 
     public final int threads;
 
@@ -40,6 +47,7 @@ public class VirtualProvider {
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
+        scheduledExecutorService = Executors.newScheduledThreadPool(threads, new NamedInternalThreadFactory("concurrent-timer", true));
     }
 
     public long getLatencyThreshold() {
@@ -52,11 +60,14 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
-        if (RTT < 1) {
-            this.concurrentLimitProcessor.switchFillUp();
-        }
-        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+        scheduledExecutorService.schedule(() -> {
+            double computingRate = (computed.get() - lastComputed) / RTT;
+            this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+        }, latency, TimeUnit.NANOSECONDS);
+//        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
+//        if (RTT < 1) {
+//            this.concurrentLimitProcessor.switchFillUp();
+//        }
         this.recordLatency(latency / (int) 1e6);
     }
 
