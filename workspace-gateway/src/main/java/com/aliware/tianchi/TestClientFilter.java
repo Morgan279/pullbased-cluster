@@ -25,10 +25,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-//        while (virtualProvider.isConcurrentLimited()) {
-//            Thread.yield();
-//        }
-        while (virtualProvider.isConcurrentLimited()) ;
+        while (virtualProvider.isConcurrentLimited()) {
+            Thread.yield();
+        }
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
@@ -53,10 +52,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-//        if (t.getMessage().contains("thread pool is exhausted")) {
-//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//            virtualProvider.switchDrain();
-//        }
+        if (t.getMessage().contains("thread pool is exhausted")) {
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            virtualProvider.switchDrain();
+        }
         //logger.error("onError", t);
     }
 }

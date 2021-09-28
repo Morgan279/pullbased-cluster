@@ -85,7 +85,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = (Math.log(2) / 2) * 100;
+        this.gain = (Math.log(2) / 2);
 
 
         scheduledExecutorService.schedule(() -> {
@@ -104,7 +104,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = (2 / Math.log(2)) * 10;
+        this.gain = (2 / Math.log(2));
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -153,12 +153,12 @@ public class ConcurrentLimitProcessor {
                 RTPropEstimated = lastRTPropEstimated;
             }
         }, RW, RW, TimeUnit.MILLISECONDS);
-        
-//        scheduledExecutorService.scheduleAtFixedRate(() -> {
-//            if (congestion) {
-//                this.switchDrain();
-//            }
-//        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
+
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            if (congestion) {
+                this.switchDrain();
+            }
+        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private enum ConcurrentLimitStatus {

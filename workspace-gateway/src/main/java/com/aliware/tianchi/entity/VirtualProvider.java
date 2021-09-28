@@ -57,6 +57,9 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+        if (RTT < 1) {
+            this.concurrentLimitProcessor.switchFillUp();
+        }
         double computingRate = (computed.get() - lastComputed) / RTT;
         this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
 //        long now = System.nanoTime();
@@ -66,9 +69,6 @@ public class VirtualProvider {
 //            lastSamplingTime = now;
 //        }
 //        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
-//        if (RTT < 1) {
-//            this.concurrentLimitProcessor.switchFillUp();
-//        }
         this.recordLatency(latency / (int) 1e6);
     }
 
