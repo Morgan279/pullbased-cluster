@@ -47,7 +47,7 @@ public class VirtualProvider {
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
-        scheduledExecutorService = Executors.newScheduledThreadPool(threads, new NamedInternalThreadFactory("concurrent-timer", true));
+        scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
 
     public long getLatencyThreshold() {
