@@ -22,6 +22,10 @@ public class VirtualProvider {
 
     public final AtomicInteger inflight;
 
+    public final AtomicInteger assigned;
+
+    public final AtomicInteger error;
+
     private final int SAMPLING_COUNT;
 
     private final int port;
@@ -43,6 +47,8 @@ public class VirtualProvider {
         this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
+        this.assigned = new AtomicInteger(1);
+        this.error = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
@@ -53,6 +59,10 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         return inflight.get() > concurrentLimitProcessor.getInflightBound();
+    }
+
+    public double getErrorRatio() {
+        return (double) error.get() / assigned.get();
     }
 
     public void onComputed(long latency, int lastComputed) {
