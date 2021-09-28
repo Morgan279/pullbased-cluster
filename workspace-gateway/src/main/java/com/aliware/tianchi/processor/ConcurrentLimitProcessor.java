@@ -46,7 +46,7 @@ public class ConcurrentLimitProcessor {
     private final int threads;
 
     public ConcurrentLimitProcessor(int threads) {
-        this.gain = 2 / Math.log(2);
+        this.gain = 2 / Math.log(2) * 1000;
         this.threads = threads;
         this.status = ConcurrentLimitStatus.FILL_UP;
         this.roundCounter = new AtomicInteger(0);
