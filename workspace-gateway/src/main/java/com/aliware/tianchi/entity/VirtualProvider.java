@@ -62,6 +62,7 @@ public class VirtualProvider {
     }
 
     public double getErrorRatio() {
+        //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get());
         return (double) error.get() / assigned.get();
     }
 

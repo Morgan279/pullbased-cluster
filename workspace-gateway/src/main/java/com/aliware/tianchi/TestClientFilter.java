@@ -24,7 +24,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-        virtualProvider.assigned.incrementAndGet();
 
         while (virtualProvider.isConcurrentLimited()) {
             Thread.yield();
@@ -40,8 +39,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
                 virtualProvider.computed.incrementAndGet();
+                virtualProvider.assigned.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             } else {
+                virtualProvider.assigned.incrementAndGet();
                 virtualProvider.error.incrementAndGet();
             }
         });
