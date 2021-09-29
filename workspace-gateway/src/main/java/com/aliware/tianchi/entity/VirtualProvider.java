@@ -58,12 +58,13 @@ public class VirtualProvider {
     }
 
     public boolean isConcurrentLimited() {
+        //logger.info("inflight: {} bound: {}", inflight.get(), concurrentLimitProcessor.getInflightBound());
         return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
     public double getErrorRatio() {
-        //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get());
-        return (double) error.get() / assigned.get();
+        //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get() / 3);
+        return (double) error.get() / assigned.get() / 3;
     }
 
     public void onComputed(long latency, int lastComputed) {
@@ -74,7 +75,7 @@ public class VirtualProvider {
         double computingRate = (computed.get() - lastComputed) / RTT;
         this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 10 * concurrentLimitProcessor.RTPropEstimated) {
+        if (now - lastSamplingTime > 100 * concurrentLimitProcessor.RTPropEstimated) {
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;
