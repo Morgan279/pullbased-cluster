@@ -31,10 +31,9 @@ public class UserLoadBalance implements LoadBalance {
         while (true) {
             Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
-            if (ThreadLocalRandom.current().nextDouble() < virtualProvider.getErrorRatio()) {
-                continue;
+            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+                return selected;
             }
-            return selected;
         }
         //return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
     }
