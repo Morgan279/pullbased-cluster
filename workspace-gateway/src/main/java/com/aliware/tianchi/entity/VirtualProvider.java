@@ -36,7 +36,7 @@ public class VirtualProvider {
 
     private long sum;
 
-    private volatile long lastSamplingTime = System.nanoTime();
+    private volatile long lastSamplingTime = System.currentTimeMillis();
 
     public VirtualProvider(int port, int threads) {
         this.port = port;
@@ -72,12 +72,12 @@ public class VirtualProvider {
         }
         double computingRate = (computed.get() - lastComputed) / RTT;
         this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
-//        long now = System.nanoTime();
-//        if (now - lastSamplingTime > latency) {
-//            double computingRate = (computed.get() - lastComputed) / RTT;
-//            this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
-//            lastSamplingTime = now;
-//        }
+        long now = System.currentTimeMillis();
+        if (now - lastSamplingTime > 10 * concurrentLimitProcessor.RTPropEstimated) {
+            assigned.set(1);
+            error.set(0);
+            lastSamplingTime = now;
+        }
 //        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
         this.recordLatency(latency / (int) 1e6);
     }

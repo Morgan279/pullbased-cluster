@@ -33,7 +33,7 @@ public class ConcurrentLimitProcessor {
 
     private long lastSamplingTime;
 
-    private volatile double RTPropEstimated;
+    public volatile double RTPropEstimated;
 
     private volatile double lastRTPropEstimated;
 
@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
 
 
     public int getInflightBound() {
-        return (int) (gain * computingRateEstimate * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads * 10);
+        return (int) (gain * computingRateEstimate * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
     }
 
 
