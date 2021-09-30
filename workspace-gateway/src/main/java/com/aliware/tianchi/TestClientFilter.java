@@ -34,7 +34,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
 
         virtualProvider.waiting.incrementAndGet();
-        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()) ;
+        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()){
+            Thread.yield();
+        }
         virtualProvider.concurrentLimitProcessor.tokenBucket.send(virtualProvider.waiting);
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
