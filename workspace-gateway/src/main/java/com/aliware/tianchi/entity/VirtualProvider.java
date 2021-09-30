@@ -79,9 +79,9 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed, int lastComing) {
         double RTT = latency / 1e6;
-//        if (RTT < 0) {
-//            this.concurrentLimitProcessor.switchFillUp();
-//        }
+        if (RTT < 3) {
+            this.concurrentLimitProcessor.switchFillUp();
+        }
         double computingRate = (computed.get() - lastComputed) / RTT;
         //logger.info("computingRate: {} inflight: {}", computingRate * RTT, inflightEstimate);
         //logger.info("inflight: {} inflight2: {} comingDiff: {}", inflight / RTT, this.inflight.get(), comingNum.get() - lastComing);
