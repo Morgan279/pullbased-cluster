@@ -1,6 +1,7 @@
 package com.aliware.tianchi.entity;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TokenBucket {
 
@@ -16,13 +17,37 @@ public class TokenBucket {
 
     public volatile double pacingGain;
 
+    public long nextSendTime = 0;
+
+    private double computingRate;
+
     public TokenBucket(double computingRate, double pacingGain) {
         this.setRate(computingRate);
+        this.computingRate = computingRate;
         this.pacingGain = pacingGain;
         this.storedPermits = 0D;
         this.elapsedNanos = 0L;
         this.nextFreeTime = 0L;
         this.lastAcquireNanoSec = System.nanoTime();
+    }
+
+    private volatile boolean isSent = false;
+
+    public void send(AtomicInteger waiting) {
+        if (isSent) return;
+        isSent = true;
+        long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
+        System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
+        waiting.set(0);
+        lastAcquireNanoSec = System.nanoTime();
+        elapsedNanos = now;
+        isSent = false;
+    }
+
+    public boolean canSend() {
+        long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        return now >= nextSendTime;
     }
 
     public void acquire() {
@@ -68,6 +93,7 @@ public class TokenBucket {
     }
 
     public void setRate(double computingRate) {
-        this.grantInterval =  1e6 / computingRate;
+        this.computingRate = computingRate;
+        this.grantInterval = 1e6 / computingRate;
     }
 }

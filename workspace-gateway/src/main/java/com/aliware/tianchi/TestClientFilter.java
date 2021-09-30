@@ -33,13 +33,17 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             throw new RpcException();
         }
 
+        virtualProvider.waiting.incrementAndGet();
+        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()) ;
+        virtualProvider.concurrentLimitProcessor.tokenBucket.send(virtualProvider.waiting);
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
 //        }
 //        while (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
 //            Thread.yield();
 //        }
-        virtualProvider.concurrentLimitProcessor.tokenBucket.acquire();
+
+//        virtualProvider.concurrentLimitProcessor.tokenBucket.acquire();
 
         //int lastComing = virtualProvider.comingNum.getAndIncrement();
 
@@ -82,11 +86,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        if (t.getMessage().contains("thread pool is exhausted")) {
-            //logger.warn("exhausted");
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            virtualProvider.switchDrain();
-        }
+//        if (t.getMessage().contains("thread pool is exhausted")) {
+//            //logger.warn("exhausted");
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            virtualProvider.switchDrain();
+//        }
         //logger.error("onError", t);
     }
 }

@@ -86,7 +86,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        return (int) (computingRateEstimate * RTPropEstimated * threads * threads);
+        return (int) (computingRateEstimate * RTPropEstimated * threads * 32);
     }
 
 
@@ -180,7 +180,7 @@ public class ConcurrentLimitProcessor {
 
     public void initSchedule() {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
-        scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 1000, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
                 RTPropEstimated = lastRTPropEstimated;

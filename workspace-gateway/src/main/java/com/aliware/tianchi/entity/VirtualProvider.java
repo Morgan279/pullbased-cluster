@@ -28,6 +28,8 @@ public class VirtualProvider {
 
     public final AtomicInteger comingNum;
 
+    public final AtomicInteger waiting;
+
     private final int SAMPLING_COUNT;
 
     private final int port;
@@ -54,6 +56,7 @@ public class VirtualProvider {
         this.assigned = new AtomicInteger(1);
         this.error = new AtomicInteger(0);
         this.comingNum = new AtomicInteger(0);
+        this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
@@ -76,9 +79,9 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed, int lastComing) {
         double RTT = latency / 1e6;
-        if (RTT < 0) {
-            this.concurrentLimitProcessor.switchFillUp();
-        }
+//        if (RTT < 0) {
+//            this.concurrentLimitProcessor.switchFillUp();
+//        }
         double computingRate = (computed.get() - lastComputed) / RTT;
         //logger.info("computingRate: {} inflight: {}", computingRate * RTT, inflightEstimate);
         //logger.info("inflight: {} inflight2: {} comingDiff: {}", inflight / RTT, this.inflight.get(), comingNum.get() - lastComing);
