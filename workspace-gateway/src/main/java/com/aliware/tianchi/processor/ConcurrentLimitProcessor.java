@@ -71,10 +71,9 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-//            if (funnel.size() < threads * 100) {
-//                funnel.add(true);
-//            }
-            funnel.add(true);
+            if (funnel.size() < threads * 100) {
+                funnel.add(true);
+            }
             funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
             //logger.info("interval: {}", (int) (1000 / gain / computingRateEstimate));
         }
@@ -178,7 +177,7 @@ public class ConcurrentLimitProcessor {
     }
 
     public void initSchedule() {
-        funnelScheduler.schedule(new Leaking(), 1, TimeUnit.SECONDS);
+        funnelScheduler.schedule(new Leaking(), 0, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 1000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {

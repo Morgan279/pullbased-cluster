@@ -50,8 +50,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
-            double RTT = (System.nanoTime() - startTime) / 1e6;
-            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
+//            double RTT = (System.nanoTime() - startTime) / 1e6;
+//            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
 //                logger.info("RTT: {}", latency / 1e6);
