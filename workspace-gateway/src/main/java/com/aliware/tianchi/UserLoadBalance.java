@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,8 +32,8 @@ public class UserLoadBalance implements LoadBalance {
 //                return selected;
 //            }
 //        }
-        //return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
 

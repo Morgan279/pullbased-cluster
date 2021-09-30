@@ -1,6 +1,7 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.constant.Config;
+import com.aliware.tianchi.entity.TokenBucket;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,8 @@ public class ConcurrentLimitProcessor {
 
     private final int threads;
 
+    public TokenBucket tokenBucket;
+
     public ConcurrentLimitProcessor(int threads) {
         this.gain = 2 / Math.log(2);
         this.threads = threads;
@@ -59,6 +62,7 @@ public class ConcurrentLimitProcessor {
         this.computingRateEstimate = threads;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
+        this.tokenBucket = new TokenBucket(computingRateEstimate);
         this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
@@ -83,9 +87,9 @@ public class ConcurrentLimitProcessor {
     public int getInflightBound() {
         //logger.info("computingRateEstimate: {}", (int) (computingRateEstimate * RTPropEstimated));
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
-        return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
+        //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        //return (int) (computingRateEstimate);
+        return (int) (gain * computingRateEstimate);
     }
 
 
@@ -94,16 +98,16 @@ public class ConcurrentLimitProcessor {
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, averageRT, computingRate);
-                return;
+                break;
 
             case FILL_UP:
                 this.handleFillUp(RTT, computingRate);
-                return;
+                break;
 
             case DRAIN:
                 this.handleDrain(computingRate);
         }
-
+        tokenBucket.setRate(gain * computingRateEstimate);
     }
 
     public void switchDrain() {
@@ -177,7 +181,7 @@ public class ConcurrentLimitProcessor {
     }
 
     public void initSchedule() {
-        funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
+        //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 1000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {

@@ -65,8 +65,8 @@ public class VirtualProvider {
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
         //logger.info("inflight: {} bound: {}", inflightEstimate, concurrentLimitProcessor.getInflightBound());
-        //return inflightEstimate > concurrentLimitProcessor.getInflightBound();
-        return inflight.get() > concurrentLimitProcessor.getInflightBound();
+        return inflightEstimate > concurrentLimitProcessor.getInflightBound();
+        //return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
     public double getErrorRatio() {
@@ -98,10 +98,8 @@ public class VirtualProvider {
     private int inflightEstimate = 0;
 
     public void estimateInflight(int newInflight) {
-//        BlockingQueue<Integer> blockingQueue = new LinkedBlockingQueue<>();
-//        blockingQueue.
         long now = System.currentTimeMillis();
-        if (now - lastArriveTime > 10) {
+        if (now - lastArriveTime > 1) {
             inflightEstimate = newInflight;
             lastArriveTime = now;
         } else {

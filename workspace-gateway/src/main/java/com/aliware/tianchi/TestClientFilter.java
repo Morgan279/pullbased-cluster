@@ -29,9 +29,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        virtualProvider.arriveTime = now;
 
 //
-        if (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
-            throw new RpcException();
-        }
+//        if (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
+//            throw new RpcException();
+//        }
 
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
@@ -39,6 +39,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        while (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
 //            Thread.yield();
 //        }
+        virtualProvider.concurrentLimitProcessor.tokenBucket.acquire();
+        
         int lastComing = virtualProvider.comingNum.getAndIncrement();
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
@@ -51,7 +53,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
-//            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
+            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
 //                logger.info("RTT: {}", latency / 1e6);
