@@ -26,17 +26,21 @@ public class VirtualProvider {
 
     public final AtomicInteger error;
 
+    public final AtomicInteger comingNum;
+
     private final int SAMPLING_COUNT;
 
     private final int port;
 
-    private final ConcurrentLimitProcessor concurrentLimitProcessor;
+    public final ConcurrentLimitProcessor concurrentLimitProcessor;
 
     private int counter;
 
     private long sum;
 
     private volatile long lastSamplingTime = System.currentTimeMillis();
+
+    public volatile long lastArriveTime = System.currentTimeMillis();
 
     public VirtualProvider(int port, int threads) {
         this.port = port;
@@ -49,6 +53,7 @@ public class VirtualProvider {
         this.inflight = new AtomicInteger(0);
         this.assigned = new AtomicInteger(1);
         this.error = new AtomicInteger(0);
+        this.comingNum = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
@@ -58,7 +63,9 @@ public class VirtualProvider {
     }
 
     public boolean isConcurrentLimited() {
-        //logger.info("inflight: {} bound: {}", inflight.get(), concurrentLimitProcessor.getInflightBound());
+        //return concurrentLimitProcessor.rateLimiter.tryAcquire();
+        //logger.info("inflight: {} bound: {}", inflightEstimate, concurrentLimitProcessor.getInflightBound());
+        //return inflightEstimate > concurrentLimitProcessor.getInflightBound();
         return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
@@ -67,21 +74,39 @@ public class VirtualProvider {
         return (double) error.get() / assigned.get() / 3;
     }
 
-    public void onComputed(long latency, int lastComputed) {
+    public void onComputed(long latency, int lastComputed, int lastComing) {
         double RTT = latency / 1e6;
-        if (RTT < 3) {
+        if (RTT < 0) {
             this.concurrentLimitProcessor.switchFillUp();
         }
         double computingRate = (computed.get() - lastComputed) / RTT;
-        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+        //logger.info("computingRate: {} inflight: {}", computingRate * RTT, inflightEstimate);
+        //logger.info("inflight: {} inflight2: {} comingDiff: {}", inflight / RTT, this.inflight.get(), comingNum.get() - lastComing);
+        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate, 0);
+        this.recordLatency(latency / (int) 1e6);
+    }
+
+    public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
         if (now - lastSamplingTime > 100 * concurrentLimitProcessor.RTPropEstimated) {
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;
         }
-//        double computingRate = (computed.incrementAndGet() - lastComputed) / RTT;
-        this.recordLatency(latency / (int) 1e6);
+    }
+
+    private int inflightEstimate = 0;
+
+    public void estimateInflight(int newInflight) {
+//        BlockingQueue<Integer> blockingQueue = new LinkedBlockingQueue<>();
+//        blockingQueue.
+        long now = System.currentTimeMillis();
+        if (now - lastArriveTime > 10) {
+            inflightEstimate = newInflight;
+            lastArriveTime = now;
+        } else {
+            inflightEstimate = Math.max(inflightEstimate, newInflight);
+        }
     }
 
     private synchronized void recordLatency(long latency) {

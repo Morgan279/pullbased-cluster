@@ -24,10 +24,22 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+//        long now = System.nanoTime();
+//        logger.info("arrive interval: {}", (now - virtualProvider.arriveTime) / 1e6);
+//        virtualProvider.arriveTime = now;
 
-        while (virtualProvider.isConcurrentLimited()) {
-            Thread.yield();
+//
+        if (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
+            throw new RpcException();
         }
+
+//        while (virtualProvider.isConcurrentLimited()) {
+//            Thread.yield();
+//        }
+//        while (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
+//            Thread.yield();
+//        }
+        int lastComing = virtualProvider.comingNum.getAndIncrement();
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
@@ -35,14 +47,25 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+            virtualProvider.refreshErrorSampling();
+            virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
+            double RTT = (System.nanoTime() - startTime) / 1e6;
+            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
+//                logger.info("RTT: {}", latency / 1e6);
                 virtualProvider.computed.incrementAndGet();
-                virtualProvider.assigned.incrementAndGet();
-                virtualProvider.onComputed(latency, lastComputed);
+//                inflight = Math.max(inflight, virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed));
+//
+//                logger.info("coming: {}, computed: {}, inflight: {}, rate: {}",
+//                        virtualProvider.comingNum.get() - lastComing,
+//                        virtualProvider.computed.get() - lastComputed,
+//                        inflight,
+//                        (virtualProvider.computed.get() - lastComputed) / (latency / 1e6)
+//                );
+                virtualProvider.onComputed(latency, lastComputed, lastComing);
             } else {
-                virtualProvider.assigned.incrementAndGet();
                 virtualProvider.error.incrementAndGet();
             }
         });
@@ -57,6 +80,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         if (t.getMessage().contains("thread pool is exhausted")) {
+            //logger.warn("exhausted");
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             virtualProvider.switchDrain();
         }
