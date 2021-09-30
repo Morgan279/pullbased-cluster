@@ -45,14 +45,11 @@ public class ConcurrentLimitProcessor {
 
     private volatile boolean congestion;
 
-    private volatile boolean init = false;
-
     private final int threads;
 
     public TokenBucket tokenBucket;
 
     public ConcurrentLimitProcessor(int threads) {
-        this.gain = 2 / Math.log(2);
         this.threads = threads;
         this.status = ConcurrentLimitStatus.FILL_UP;
         this.roundCounter = new AtomicInteger(0);
@@ -62,7 +59,7 @@ public class ConcurrentLimitProcessor {
         this.computingRateEstimate = threads / 10D;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        this.tokenBucket = new TokenBucket(computingRateEstimate);
+        this.tokenBucket = new TokenBucket(computingRateEstimate, 2 / Math.log(2));
         //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
@@ -89,7 +86,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        return (int) (gain * computingRateEstimate * RTPropEstimated);
+        return (int) (computingRateEstimate * RTPropEstimated * threads * 32);
     }
 
 
@@ -108,14 +105,15 @@ public class ConcurrentLimitProcessor {
             case DRAIN:
                 this.handleDrain(computingRate);
         }
-        tokenBucket.setRate(gain * computingRateEstimate / RTPropEstimated);
+        
+        tokenBucket.setRate(computingRateEstimate);
     }
 
     public void switchDrain() {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        this.gain = (Math.log(2) / 2);
+        tokenBucket.pacingGain = (Math.log(2) / 2);
 
 
         scheduledExecutorService.schedule(() -> {
@@ -134,7 +132,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        this.gain = (2 / Math.log(2));
+        tokenBucket.pacingGain = (2 / Math.log(2));
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -146,7 +144,7 @@ public class ConcurrentLimitProcessor {
         long now = System.currentTimeMillis();
 
         if (now - lastPhaseStartedTime > RTPropEstimated) {
-            gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
+            tokenBucket.pacingGain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
             lastPhaseStartedTime = now;
         }
 

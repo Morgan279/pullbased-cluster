@@ -6,7 +6,7 @@ public class TokenBucket {
 
     private double storedPermits;
 
-    private volatile double grantRate;
+    private double grantInterval;
 
     private long elapsedNanos;
 
@@ -14,8 +14,11 @@ public class TokenBucket {
 
     private long nextFreeTime;
 
-    public TokenBucket(double grantRate) {
-        this.grantRate = grantRate;
+    public volatile double pacingGain;
+
+    public TokenBucket(double grantInterval, double pacingGain) {
+        this.grantInterval = grantInterval;
+        this.pacingGain = pacingGain;
         this.storedPermits = 0D;
         this.elapsedNanos = 0L;
         this.nextFreeTime = 0L;
@@ -44,7 +47,7 @@ public class TokenBucket {
 
         double spend = Math.min(1, storedPermits);
         double freshPermits = 1 - spend;
-        long waitTime = (long) (freshPermits * grantRate);
+        long waitTime = (long) (freshPermits * grantInterval / pacingGain);
         this.nextFreeTime = saturatedAdd(nextFreeTime, waitTime);
         --storedPermits;
 
@@ -58,13 +61,13 @@ public class TokenBucket {
 
     private void reSync(long now) {
         if (now > nextFreeTime) {
-            double newPermits = (now - nextFreeTime) / grantRate;
+            double newPermits = (now - nextFreeTime) / grantInterval;
             storedPermits += newPermits;
             nextFreeTime = now;
         }
     }
 
     public void setRate(double computingRate) {
-        this.grantRate = 1e6 / computingRate;
+        this.grantInterval = Math.min(grantInterval, 1e6 / computingRate);
     }
 }

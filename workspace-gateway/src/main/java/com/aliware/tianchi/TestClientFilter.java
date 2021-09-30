@@ -29,9 +29,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        virtualProvider.arriveTime = now;
 
 //
-//        if (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
-//            throw new RpcException();
-//        }
+        if (virtualProvider.isConcurrentLimited()) {
+            throw new RpcException();
+        }
 
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
@@ -67,9 +67,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //                        (virtualProvider.computed.get() - lastComputed) / (latency / 1e6)
 //                );
                 virtualProvider.onComputed(latency, lastComputed, 0);
-            } else {
-                virtualProvider.error.incrementAndGet();
             }
+//            else {
+//                virtualProvider.error.incrementAndGet();
+//            }
         });
 
     }
