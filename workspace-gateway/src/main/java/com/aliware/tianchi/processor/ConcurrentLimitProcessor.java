@@ -177,7 +177,7 @@ public class ConcurrentLimitProcessor {
     }
 
     public void initSchedule() {
-        funnelScheduler.schedule(new Leaking(), 0, TimeUnit.SECONDS);
+        funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 1000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
