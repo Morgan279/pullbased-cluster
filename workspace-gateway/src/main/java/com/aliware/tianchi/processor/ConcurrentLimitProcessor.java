@@ -56,7 +56,7 @@ public class ConcurrentLimitProcessor {
         this.congestion = false;
         this.RTPropEstimated = threads / 1000D;
         this.lastRTPropEstimated = RTPropEstimated;
-        this.computingRateEstimate = threads / 10D;
+        this.computingRateEstimate = threads;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
         this.tokenBucket = new TokenBucket(computingRateEstimate, 2 / Math.log(2));
@@ -86,7 +86,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        return (int) (computingRateEstimate * RTPropEstimated * threads * 32);
+        return (int) (computingRateEstimate * RTPropEstimated * threads * threads);
     }
 
 

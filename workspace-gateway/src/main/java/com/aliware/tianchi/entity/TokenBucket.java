@@ -16,8 +16,8 @@ public class TokenBucket {
 
     public volatile double pacingGain;
 
-    public TokenBucket(double grantInterval, double pacingGain) {
-        this.grantInterval = grantInterval;
+    public TokenBucket(double computingRate, double pacingGain) {
+        this.setRate(computingRate);
         this.pacingGain = pacingGain;
         this.storedPermits = 0D;
         this.elapsedNanos = 0L;
@@ -48,7 +48,7 @@ public class TokenBucket {
         double spend = Math.min(1, storedPermits);
         double freshPermits = 1 - spend;
         long waitTime = (long) (freshPermits * grantInterval / pacingGain);
-        this.nextFreeTime = saturatedAdd(nextFreeTime, waitTime);
+        this.nextFreeTime = nextFreeTime + waitTime;
         --storedPermits;
 
         return res;
