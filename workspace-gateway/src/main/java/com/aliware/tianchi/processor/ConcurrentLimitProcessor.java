@@ -39,7 +39,7 @@ public class ConcurrentLimitProcessor {
 
     public ConcurrentLinkedQueue<Boolean> funnel;
 
-    private final ScheduledExecutorService funnelScheduler = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("funnel-timer", true));
+    //private final ScheduledExecutorService funnelScheduler = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("funnel-timer", true));
 
     private final AtomicInteger roundCounter;
 
@@ -57,13 +57,13 @@ public class ConcurrentLimitProcessor {
         this.status = ConcurrentLimitStatus.FILL_UP;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
-        this.RTPropEstimated = threads / 1000d;
+        this.RTPropEstimated = threads / 1000D;
         this.lastRTPropEstimated = RTPropEstimated;
-        this.computingRateEstimate = threads;
+        this.computingRateEstimate = threads / 10D;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
         this.tokenBucket = new TokenBucket(computingRateEstimate);
-        this.funnel = new ConcurrentLinkedQueue<>();
+        //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
 
@@ -78,7 +78,7 @@ public class ConcurrentLimitProcessor {
             if (funnel.size() < threads * 100) {
                 funnel.add(true);
             }
-            funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
+            //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
             //logger.info("interval: {}", (int) (1000 / gain / computingRateEstimate));
         }
     }
@@ -89,12 +89,13 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        return (int) (gain * computingRateEstimate);
+        return (int) (gain * computingRateEstimate * RTPropEstimated);
     }
 
 
     public void onACK(double RTT, long averageRT, double computingRate, double comingRate) {
         lastRTPropEstimated = RTT;
+
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, averageRT, computingRate);
@@ -107,7 +108,7 @@ public class ConcurrentLimitProcessor {
             case DRAIN:
                 this.handleDrain(computingRate);
         }
-        tokenBucket.setRate(gain * computingRateEstimate);
+        tokenBucket.setRate(gain * computingRateEstimate / RTPropEstimated);
     }
 
     public void switchDrain() {

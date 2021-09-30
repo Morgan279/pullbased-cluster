@@ -40,8 +40,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            Thread.yield();
 //        }
         virtualProvider.concurrentLimitProcessor.tokenBucket.acquire();
-        
-        int lastComing = virtualProvider.comingNum.getAndIncrement();
+
+        //int lastComing = virtualProvider.comingNum.getAndIncrement();
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
@@ -49,11 +49,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-            virtualProvider.refreshErrorSampling();
-            virtualProvider.assigned.incrementAndGet();
+            //virtualProvider.refreshErrorSampling();
+            //           virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
-            virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
+            //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
 //                logger.info("RTT: {}", latency / 1e6);
@@ -66,7 +66,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //                        inflight,
 //                        (virtualProvider.computed.get() - lastComputed) / (latency / 1e6)
 //                );
-                virtualProvider.onComputed(latency, lastComputed, lastComing);
+                virtualProvider.onComputed(latency, lastComputed, 0);
             } else {
                 virtualProvider.error.incrementAndGet();
             }
