@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.5, 0.8, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.05, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -182,9 +182,10 @@ public class ConcurrentLimitProcessor {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-                RTPropEstimated = lastRTPropEstimated;
-            }
+            RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE;
+//            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+//                RTPropEstimated = lastRTPropEstimated;
+//            }
         }, RW, RW, TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
