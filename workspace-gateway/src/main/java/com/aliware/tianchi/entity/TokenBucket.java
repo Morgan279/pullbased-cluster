@@ -6,7 +6,7 @@ public class TokenBucket {
 
     private double storedPermits;
 
-    private double grantInterval;
+    private volatile double grantInterval;
 
     private long elapsedNanos;
 
@@ -68,6 +68,6 @@ public class TokenBucket {
     }
 
     public void setRate(double computingRate) {
-        this.grantInterval = Math.min(grantInterval, 1e6 / computingRate);
+        this.grantInterval =  1e6 / computingRate;
     }
 }

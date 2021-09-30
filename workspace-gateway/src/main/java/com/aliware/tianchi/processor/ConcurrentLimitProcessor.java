@@ -105,7 +105,7 @@ public class ConcurrentLimitProcessor {
             case DRAIN:
                 this.handleDrain(computingRate);
         }
-        
+
         tokenBucket.setRate(computingRateEstimate);
     }
 
@@ -151,15 +151,14 @@ public class ConcurrentLimitProcessor {
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
             now = System.currentTimeMillis();
-            if (now - lastSamplingTime > CW_FACTOR * averageRT) {
-                if (computingRate > computingRateEstimate) {
-                    congestion = false;
-                }
+            if (now - lastSamplingTime > CW_FACTOR * averageRT && computingRate > computingRateEstimate) {
+                congestion = false;
                 computingRateEstimate = computingRate;
                 lastSamplingTime = now;
-            } else {
-                computingRateEstimate = Math.max(computingRateEstimate, computingRate);
             }
+//            else {
+//                computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+//            }
         }
 
     }
