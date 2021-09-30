@@ -55,8 +55,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-            //virtualProvider.refreshErrorSampling();
-            //           virtualProvider.assigned.incrementAndGet();
+            virtualProvider.refreshErrorSampling();
+            virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
@@ -73,10 +73,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //                        (virtualProvider.computed.get() - lastComputed) / (latency / 1e6)
 //                );
                 virtualProvider.onComputed(latency, lastComputed, 0);
+            } else {
+                virtualProvider.error.incrementAndGet();
             }
-//            else {
-//                virtualProvider.error.incrementAndGet();
-//            }
         });
 
     }
