@@ -132,7 +132,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        tokenBucket.pacingGain = (2 / Math.log(2));
+        tokenBucket.pacingGain = (2 / Math.log(2)) * Math.PI;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -182,10 +182,9 @@ public class ConcurrentLimitProcessor {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            RTPropEstimated = Config.RT_PROP_ESTIMATE_VALUE;
-//            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-//                RTPropEstimated = lastRTPropEstimated;
-//            }
+            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+                RTPropEstimated = lastRTPropEstimated;
+            }
         }, RW, RW, TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
