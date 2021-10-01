@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.05, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -132,7 +132,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        tokenBucket.pacingGain = 1.66;
+        tokenBucket.pacingGain = 2 / Math.log(2);
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
