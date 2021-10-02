@@ -89,7 +89,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimated, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimated * computingRateEstimated * RTPropEstimated * threads);
-        return (int) (computingRateEstimated * RTPropEstimated * threads * 32);
+        return (int) (computingRateEstimated * RTPropEstimated * threads * 512);
     }
 
 

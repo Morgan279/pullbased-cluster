@@ -48,7 +48,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int lastComputed = virtualProvider.computed.get();
         virtualProvider.inflight.incrementAndGet();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-            virtualProvider.refreshErrorSampling();
+//            virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
