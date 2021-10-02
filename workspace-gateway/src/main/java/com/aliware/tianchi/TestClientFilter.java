@@ -31,9 +31,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
 
         virtualProvider.waiting.incrementAndGet();
-        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()){
-            Thread.yield();
-        }
+        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()) ;
 
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
@@ -46,6 +44,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         virtualProvider.concurrentLimitProcessor.tokenBucket.send(startTime, virtualProvider.waiting);
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
+        virtualProvider.waiting.decrementAndGet();
         virtualProvider.inflight.incrementAndGet();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.refreshErrorSampling();

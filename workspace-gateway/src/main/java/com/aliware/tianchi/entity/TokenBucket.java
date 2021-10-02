@@ -39,7 +39,7 @@ public class TokenBucket {
         long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
-        waiting.set(0);
+        //waiting.set(0);
         elapsedNanos = now;
         lastAcquireNanoSec = System.nanoTime();
         isSent = false;
