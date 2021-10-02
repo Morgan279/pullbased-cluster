@@ -17,7 +17,7 @@ public class ConcurrentLimitProcessor {
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
-    private static final int CW_FACTOR = 4;
+    private static final int CW_FACTOR = 6;
 
     private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
@@ -130,16 +130,16 @@ public class ConcurrentLimitProcessor {
         tokenBucket.pacingGain = (Math.log(2) / 2);
 
 
-        scheduledExecutorService.schedule(() -> {
-            int round;
-            do {
-                round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
-            } while (round == 1);
-            roundCounter.set(round);
-
-            this.congestion = true;
-            this.status = ConcurrentLimitStatus.PROBE;
-        }, 4, TimeUnit.MILLISECONDS);
+//        scheduledExecutorService.schedule(() -> {
+//            int round;
+//            do {
+//                round = ThreadLocalRandom.current().nextInt(GAIN_VALUES.length);
+//            } while (round == 1);
+//            roundCounter.set(round);
+//
+//            this.congestion = true;
+//            this.status = ConcurrentLimitStatus.PROBE;
+//        }, 4, TimeUnit.MILLISECONDS);
     }
 
     public void switchFillUp() {
@@ -167,18 +167,16 @@ public class ConcurrentLimitProcessor {
         if (computingRate > computingRateEstimated) {
             congestionCounter.set(0);
             computingRateEstimated = computingRate;
-        } else {
+        } else if(System.currentTimeMillis() - lastSamplingTime > RTPropEstimated){
             if (congestionCounter.incrementAndGet() >= 6) {
                 congestionCounter.set(0);
                 this.switchDrain();
             }
+            lastSamplingTime = System.currentTimeMillis();
         }
 
-        if (RTPropEstimated < RTT) {
-            RTPropEstimated = RTT;
-        }
-//        synchronized (UPDATE_LOCK) {
-//            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+        synchronized (UPDATE_LOCK) {
+            RTPropEstimated = Math.min(RTPropEstimated, RTT);
 //            now = System.currentTimeMillis();
 //            if (now - lastSamplingTime > CW_FACTOR * averageRT) {
 //                if (computingRate > computingRateEstimated) {
@@ -189,14 +187,15 @@ public class ConcurrentLimitProcessor {
 //            } else {
 //                computingRateEstimated = Math.max(computingRateEstimated, computingRate);
 //            }
-//        }
+        }
 
 
     }
 
     private void handleFillUp(double RTT, double computingRate) {
         if (computingRate > computingRateEstimated) {
-            computingRateEstimated = computingRate;
+//            computingRateEstimated = computingRate;
+            this.status = ConcurrentLimitStatus.PROBE;
         }
 //        synchronized (UPDATE_LOCK) {
 //            //RTPropEstimated = Math.min(RTPropEstimated, RTT);
@@ -205,9 +204,12 @@ public class ConcurrentLimitProcessor {
     }
 
     private void handleDrain(double RTT, double computingRate) {
-        if (RTPropEstimated < RTT) {
-            RTPropEstimated = RTT;
+        if(RTT < RTPropEstimated){
+            this.status = ConcurrentLimitStatus.PROBE;
         }
+//        if (RTPropEstimated < RTT) {
+//            RTPropEstimated = RTT;
+//        }
 //        synchronized (UPDATE_LOCK) {
 //            RTPropEstimated = Math.min(RTPropEstimated, RTT);
 //        }
