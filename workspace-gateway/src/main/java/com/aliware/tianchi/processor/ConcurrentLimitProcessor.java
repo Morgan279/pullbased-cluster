@@ -35,7 +35,9 @@ public class ConcurrentLimitProcessor {
 
     private volatile double lastRTPropEstimated;
 
-    public volatile double computingRateEstimate;
+    private volatile double lastComputingRateEstimated;
+
+    public volatile double computingRateEstimated;
 
     public ConcurrentLinkedQueue<Boolean> funnel;
 
@@ -56,46 +58,47 @@ public class ConcurrentLimitProcessor {
         this.congestion = false;
         this.RTPropEstimated = threads / 1000D;
         this.lastRTPropEstimated = RTPropEstimated;
-        this.computingRateEstimate = threads;
+        this.computingRateEstimated = threads;
+        this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        this.tokenBucket = new TokenBucket(computingRateEstimate, 2 / Math.log(2));
+        this.tokenBucket = new TokenBucket(computingRateEstimated, 2 / Math.log(2));
         //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
 
     private int getLeakingRate() {
-        return (int) (1000 / gain / computingRateEstimate);
+        return (int) (1000 / gain / computingRateEstimated);
     }
 
     private class Leaking implements Runnable {
 
         @Override
         public void run() {
-            if (funnel.size() < threads * 100) {
-                funnel.add(true);
+            if (ConcurrentLimitStatus.PROBE.equals(status)) {
+                computingRateEstimated = lastComputingRateEstimated;
             }
+            scheduledExecutorService.schedule(this, (long) (CW_FACTOR * RTPropEstimated), TimeUnit.MILLISECONDS);
             //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
-            //logger.info("interval: {}", (int) (1000 / gain / computingRateEstimate));
         }
     }
 
 
     public int getInflightBound() {
-        //logger.info("computingRateEstimate: {}", (int) (computingRateEstimate * RTPropEstimated));
+        //logger.info("computingRateEstimated: {}", (int) (computingRateEstimated * RTPropEstimated));
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
-        //return (int) Math.max(gain * Math.pow(computingRateEstimate, 2) * RTPropEstimated * threads * 16, 8d * threads);
-        //return (int) (gain * computingRateEstimate * computingRateEstimate * RTPropEstimated * threads);
-        return (int) (computingRateEstimate * RTPropEstimated  * threads * 128);
+        //return (int) Math.max(gain * Math.pow(computingRateEstimated, 2) * RTPropEstimated * threads * 16, 8d * threads);
+        //return (int) (gain * computingRateEstimated * computingRateEstimated * RTPropEstimated * threads);
+        return (int) (computingRateEstimated * RTPropEstimated * threads * 32);
     }
 
 
-    public void onACK(double RTT, long averageRT, double computingRate, double comingRate) {
+    public void onACK(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
-
+        lastComputingRateEstimated = computingRate;
         switch (status) {
             case PROBE:
-                this.handleProbe(RTT, averageRT, computingRate);
+                this.handleProbe(RTT, computingRate);
                 break;
 
             case FILL_UP:
@@ -103,10 +106,10 @@ public class ConcurrentLimitProcessor {
                 break;
 
             case DRAIN:
-                this.handleDrain(computingRate);
+                this.handleDrain(RTT, computingRate);
         }
 
-        tokenBucket.setRate(computingRateEstimate);
+        tokenBucket.setRate(computingRateEstimated);
     }
 
     public void switchDrain() {
@@ -125,7 +128,7 @@ public class ConcurrentLimitProcessor {
 
             this.congestion = true;
             this.status = ConcurrentLimitStatus.PROBE;
-        }, Config.DRAIN_INTERVAL, TimeUnit.MILLISECONDS);
+        }, 2, TimeUnit.MILLISECONDS);
     }
 
     public void switchFillUp() {
@@ -137,10 +140,12 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 4, TimeUnit.MILLISECONDS);
+        }, 2, TimeUnit.MILLISECONDS);
     }
 
-    private void handleProbe(double RTT, long averageRT, double computingRate) {
+    private final AtomicInteger congestionCounter = new AtomicInteger(0);
+
+    private void handleProbe(double RTT, double computingRate) {
         long now = System.currentTimeMillis();
 
         if (now - lastPhaseStartedTime > RTPropEstimated) {
@@ -148,50 +153,70 @@ public class ConcurrentLimitProcessor {
             lastPhaseStartedTime = now;
         }
 
-        synchronized (UPDATE_LOCK) {
-            RTPropEstimated = Math.min(RTPropEstimated, RTT);
-            now = System.currentTimeMillis();
-            if (now - lastSamplingTime > CW_FACTOR * averageRT && computingRate > computingRateEstimate) {
-                congestion = false;
-                computingRateEstimate = computingRate;
-                lastSamplingTime = now;
+        if (computingRate > computingRateEstimated) {
+            congestionCounter.set(0);
+            computingRateEstimated = computingRate;
+        } else {
+            if (congestionCounter.incrementAndGet() >= 6) {
+                congestionCounter.set(0);
+                this.switchDrain();
             }
-//            else {
-//                computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-//            }
         }
+
+        if (RTPropEstimated < RTT) {
+            RTPropEstimated = RTT;
+        }
+//        synchronized (UPDATE_LOCK) {
+//            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//            now = System.currentTimeMillis();
+//            if (now - lastSamplingTime > CW_FACTOR * averageRT) {
+//                if (computingRate > computingRateEstimated) {
+//                    congestion = false;
+//                }
+//                computingRateEstimated = computingRate;
+//                lastSamplingTime = now;
+//            } else {
+//                computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+//            }
+//        }
+
 
     }
 
     private void handleFillUp(double RTT, double computingRate) {
-//        RTPropEstimated = Math.min(RTPropEstimated, RTT);
-        synchronized (UPDATE_LOCK) {
-            RTPropEstimated = Math.min(RTPropEstimated, RTT);
-            //computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+        if (computingRate > computingRateEstimated) {
+            computingRateEstimated = computingRate;
         }
+//        synchronized (UPDATE_LOCK) {
+//            //RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//            computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+//        }
     }
 
-    private void handleDrain(double computingRate) {
-//        computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-        synchronized (UPDATE_LOCK) {
-            computingRateEstimate = Math.max(computingRateEstimate, computingRate);
+    private void handleDrain(double RTT, double computingRate) {
+        if (RTPropEstimated < RTT) {
+            RTPropEstimated = RTT;
         }
+//        synchronized (UPDATE_LOCK) {
+//            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//        }
     }
 
     public void initSchedule() {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
                 RTPropEstimated = lastRTPropEstimated;
             }
         }, RW, RW, TimeUnit.MILLISECONDS);
 
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            if (congestion) {
-                this.switchDrain();
-            }
-        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            if (congestion) {
+//                this.switchDrain();
+//            }
+//        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private enum ConcurrentLimitStatus {

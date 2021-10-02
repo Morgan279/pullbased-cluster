@@ -1,7 +1,5 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
@@ -11,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,14 +25,14 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        while (true) {
-            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
-            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
-                return selected;
-            }
-        }
-//        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//        while (true) {
+//            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
+//            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+//                return selected;
+//            }
+//        }
+        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
         //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 

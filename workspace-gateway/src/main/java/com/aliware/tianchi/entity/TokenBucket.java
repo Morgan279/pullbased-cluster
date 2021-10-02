@@ -33,10 +33,10 @@ public class TokenBucket {
 
     private volatile boolean isSent = false;
 
-    public void send(AtomicInteger waiting) {
+    public void send(long sendTime, AtomicInteger waiting) {
         if (isSent) return;
         isSent = true;
-        long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);
