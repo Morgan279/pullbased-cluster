@@ -13,7 +13,7 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(128,new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
