@@ -91,7 +91,7 @@ public class VirtualProvider {
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 100 * concurrentLimitProcessor.RTPropEstimated) {
+        if (now - lastSamplingTime > 10 * concurrentLimitProcessor.RTPropEstimated) {
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;

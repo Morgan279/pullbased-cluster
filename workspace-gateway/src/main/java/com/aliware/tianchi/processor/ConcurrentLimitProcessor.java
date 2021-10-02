@@ -89,7 +89,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimated, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimated * computingRateEstimated * RTPropEstimated * threads);
-        return (int) (computingRateEstimated * RTPropEstimated * threads * 2048);
+        return (int) (computingRateEstimated * RTPropEstimated * threads * 256);
     }
 
 
@@ -128,7 +128,7 @@ public class ConcurrentLimitProcessor {
 
             this.congestion = true;
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 2, TimeUnit.MILLISECONDS);
+        }, 4, TimeUnit.MILLISECONDS);
     }
 
     public void switchFillUp() {
@@ -140,7 +140,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 2, TimeUnit.MILLISECONDS);
+        }, 4, TimeUnit.MILLISECONDS);
     }
 
     private final AtomicInteger congestionCounter = new AtomicInteger(0);
