@@ -152,7 +152,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.FILL_UP;
         //tokenBucket.pacingGain = 2 / Math.log(2);
-        tokenBucket.pacingGain = 1.8;
+        tokenBucket.pacingGain = 1.6;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
