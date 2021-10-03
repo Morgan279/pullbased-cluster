@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final int GAIN_UNIT = 1024;
+    private static final int GAIN_UNIT = 8;
 
     private static final double[] GAIN_VALUES = {GAIN_UNIT * 10D / 9D, GAIN_UNIT * 9D / 10D, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT};
 
@@ -64,7 +64,7 @@ public class ConcurrentLimitProcessor {
         this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        this.tokenBucket = new TokenBucket(computingRateEstimated, 2 / Math.log(2));
+        this.tokenBucket = new TokenBucket(computingRateEstimated, GAIN_UNIT / Math.log(2));
         //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
@@ -77,10 +77,8 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            if (ConcurrentLimitStatus.PROBE.equals(status)) {
-                computingRateEstimated = lastComputingRateEstimated;
-            }
-            scheduledExecutorService.schedule(this, (long) (RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            computingRateEstimated = lastComputingRateEstimated;
+            scheduledExecutorService.schedule(this, (long) (3D * RTPropEstimated), TimeUnit.MICROSECONDS);
             //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
         }
     }
@@ -91,8 +89,6 @@ public class ConcurrentLimitProcessor {
         public void run() {
             if (ConcurrentLimitStatus.PROBE.equals(status)) {
                 tokenBucket.pacingGain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-                computingRateEstimated = lastComputingRateEstimated;
-                tokenBucket.setRate(lastComputingRateEstimated);
             }
             scheduledExecutorService.schedule(this, (long) (RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
@@ -176,7 +172,7 @@ public class ConcurrentLimitProcessor {
             congestionCounter.set(0);
             computingRateEstimated = computingRate;
         } else if (System.currentTimeMillis() - lastSamplingTime > RTPropEstimated) {
-            if (congestionCounter.incrementAndGet() >= 100) {
+            if (congestionCounter.incrementAndGet() >= 30) {
                 congestionCounter.set(0);
                 this.switchDrain();
             }
@@ -226,7 +222,7 @@ public class ConcurrentLimitProcessor {
     public void initSchedule() {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
-        //scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.schedule(new RefreshGain(), 3000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
