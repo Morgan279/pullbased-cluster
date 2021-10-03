@@ -36,16 +36,16 @@ public class TokenBucket {
         this.lastAcquireNanoSec = System.nanoTime();
     }
 
-    private volatile boolean isSent = false;
+    private boolean isSent = false;
 
-    public void send(long sendTime, AtomicInteger waiting, double curComputingRate, int port) {
+    public synchronized void send(long sendTime, AtomicInteger waiting, double curComputingRate, int port) {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
         //long interval = (long) (waiting.get() / (pacingGain * (curComputingRate / 1e3)));
         //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}#?{}", port, now, interval, computingRate, curComputingRate, waiting.get(), pacingGain);
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
-        //waiting.set(0);
+        waiting.set(0);
         elapsedNanos = now;
         lastAcquireNanoSec = System.nanoTime();
         isSent = false;
