@@ -78,7 +78,7 @@ public class ConcurrentLimitProcessor {
             if (ConcurrentLimitStatus.PROBE.equals(status)) {
                 computingRateEstimated = lastComputingRateEstimated;
             }
-            scheduledExecutorService.schedule(this, (long) (2 * RTPropEstimated), TimeUnit.MILLISECONDS);
+            scheduledExecutorService.schedule(this, (long) (RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
             //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
         }
     }
@@ -89,6 +89,8 @@ public class ConcurrentLimitProcessor {
         public void run() {
             if (ConcurrentLimitStatus.PROBE.equals(status)) {
                 tokenBucket.pacingGain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
+                computingRateEstimated = lastComputingRateEstimated;
+                tokenBucket.setRate(lastComputingRateEstimated);
             }
             scheduledExecutorService.schedule(this, (long) (RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
@@ -128,7 +130,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.DRAIN;
 //        tokenBucket.pacingGain = (Math.log(2) / 2);
-        tokenBucket.pacingGain = 0.75;
+        tokenBucket.pacingGain = 0.9;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -149,12 +151,12 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.FILL_UP;
         //tokenBucket.pacingGain = 2 / Math.log(2);
-        tokenBucket.pacingGain = 1 / Math.log(2);
+        tokenBucket.pacingGain = 1.1;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
             this.status = ConcurrentLimitStatus.PROBE;
-        }, 1, TimeUnit.MILLISECONDS);
+        }, (long) (RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
     }
 
     private final AtomicInteger congestionCounter = new AtomicInteger(0);
@@ -221,7 +223,7 @@ public class ConcurrentLimitProcessor {
     public void initSchedule() {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
+        //scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.schedule(new RefreshGain(), 1000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
