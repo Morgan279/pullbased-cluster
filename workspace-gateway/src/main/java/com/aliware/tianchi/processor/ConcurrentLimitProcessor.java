@@ -19,7 +19,9 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.03, 0.99, 1, 1, 1, 1, 1, 1};
+    private static final int GAIN_UNIT = 1024;
+
+    private static final double[] GAIN_VALUES = {GAIN_UNIT * 10D / 9D, GAIN_UNIT * 9D / 10D, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -109,6 +111,7 @@ public class ConcurrentLimitProcessor {
     public void onACK(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
         lastComputingRateEstimated = computingRate;
+        //logger.info("lastComputingRateEstimated: {} {}", computingRate, computingRate * tokenBucket.pacingGain);
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, computingRate);
@@ -130,7 +133,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.DRAIN;
 //        tokenBucket.pacingGain = (Math.log(2) / 2);
-        tokenBucket.pacingGain = 0.9;
+        tokenBucket.pacingGain = GAIN_UNIT * 8D / 10D;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -151,7 +154,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.FILL_UP;
         //tokenBucket.pacingGain = 2 / Math.log(2);
-        tokenBucket.pacingGain = 1.1;
+        tokenBucket.pacingGain = GAIN_UNIT * 10D / 8D;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -173,7 +176,7 @@ public class ConcurrentLimitProcessor {
             congestionCounter.set(0);
             computingRateEstimated = computingRate;
         } else if (System.currentTimeMillis() - lastSamplingTime > RTPropEstimated) {
-            if (congestionCounter.incrementAndGet() >= 30) {
+            if (congestionCounter.incrementAndGet() >= 100) {
                 congestionCounter.set(0);
                 this.switchDrain();
             }
@@ -224,7 +227,7 @@ public class ConcurrentLimitProcessor {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         //scheduledExecutorService.schedule(new Leaking(), 100, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.schedule(new RefreshGain(), 1000, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new RefreshGain(), 3000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
                 RTPropEstimated = lastRTPropEstimated;
