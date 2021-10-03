@@ -79,7 +79,7 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-        if (RTT < 0) {
+        if (RTT < 1) {
             this.concurrentLimitProcessor.switchFillUp();
         }
         double computingRate = (computed.get() - lastComputed) / RTT;

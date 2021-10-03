@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Supervisor {
 
-    private final static Logger logger = LoggerFactory.getLogger(Supervisor.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Supervisor.class);
 
     private static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
 
@@ -19,7 +19,7 @@ public class Supervisor {
         int threads = Integer.parseInt(invoker.getUrl().getParameter("threads", "200"));
         virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         RoundRobinProcessor.register(port);
-        logger.info("register provider, port: " + port + " thread:" + threads);
+        LOGGER.info("register provider, port: " + port + " thread:" + threads);
     }
 
     public static VirtualProvider getVirtualProvider(int port) {

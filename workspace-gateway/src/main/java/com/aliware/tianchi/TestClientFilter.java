@@ -41,7 +41,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        }
 
         long startTime = System.nanoTime();
-        virtualProvider.concurrentLimitProcessor.tokenBucket.send(startTime, virtualProvider.waiting);
+        virtualProvider.concurrentLimitProcessor.tokenBucket.send(startTime, virtualProvider.waiting, virtualProvider.concurrentLimitProcessor.lastComputingRateEstimated, port);
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
         virtualProvider.waiting.decrementAndGet();
