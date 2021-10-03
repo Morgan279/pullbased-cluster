@@ -42,8 +42,8 @@ public class TokenBucket {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
-        long interval = (long) (waiting.get() / (pacingGain * (curComputingRate / 1e3)));
-        LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}#?{}", port, now, interval, computingRate, curComputingRate, waiting.get(), pacingGain);
+        //long interval = (long) (waiting.get() / (pacingGain * (curComputingRate / 1e3)));
+        //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}#?{}", port, now, interval, computingRate, curComputingRate, waiting.get(), pacingGain);
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         //waiting.set(0);
         elapsedNanos = now;
