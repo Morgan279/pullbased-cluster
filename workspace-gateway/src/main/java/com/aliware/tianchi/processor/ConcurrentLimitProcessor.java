@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final int GAIN_UNIT = 8;
+    private static final int GAIN_UNIT = 30;
 
     private static final double[] GAIN_VALUES = {GAIN_UNIT * 10D / 9D, GAIN_UNIT * 9D / 10D, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT};
 
