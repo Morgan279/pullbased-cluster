@@ -123,7 +123,7 @@ public class ConcurrentLimitProcessor {
                 this.handleDrain(RTT, computingRate);
         }
 
-        tokenBucket.setRate(computingRateEstimated);
+        tokenBucket.setRate(computingRateEstimated * 1.01);
     }
 
     public void switchDrain() {
@@ -131,7 +131,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.DRAIN;
 //        tokenBucket.pacingGain = (Math.log(2) / 2);
-        tokenBucket.pacingGain = 0.7;
+        tokenBucket.pacingGain = 0.5;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -151,8 +151,8 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        //tokenBucket.pacingGain = 2 / Math.log(2);
-        tokenBucket.pacingGain = 1.3;
+        tokenBucket.pacingGain = 2 / Math.log(2);
+        //tokenBucket.pacingGain = 1.5;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
