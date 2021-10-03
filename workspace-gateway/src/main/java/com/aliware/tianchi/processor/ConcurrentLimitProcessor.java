@@ -19,7 +19,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final int GAIN_UNIT = 10;
+    private static final int GAIN_UNIT = 44;
 
     private static final double[] GAIN_VALUES = {GAIN_UNIT * 10D / 9D, GAIN_UNIT * 9D / 10D, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT, GAIN_UNIT};
 
@@ -78,7 +78,7 @@ public class ConcurrentLimitProcessor {
         @Override
         public void run() {
             computingRateEstimated = lastComputingRateEstimated;
-            scheduledExecutorService.schedule(this, (long) (3D * RTPropEstimated), TimeUnit.MILLISECONDS);
+            scheduledExecutorService.schedule(this, (long) (4D * RTPropEstimated), TimeUnit.MILLISECONDS);
             //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
         }
     }
