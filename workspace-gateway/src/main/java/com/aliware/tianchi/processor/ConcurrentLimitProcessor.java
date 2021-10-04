@@ -102,7 +102,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimated, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimated * computingRateEstimated * RTPropEstimated * threads);
-        return (int) (computingRateEstimated * RTPropEstimated * threads * 32);
+        return (int) (computingRateEstimated * RTPropEstimated * threads * 256);
     }
 
 
@@ -228,7 +228,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(new RefreshGain(), 3000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-                RTPropEstimated = 360 * lastRTPropEstimated;
+                RTPropEstimated = 100 * lastRTPropEstimated;
             }
         }, 1000, RW, TimeUnit.MILLISECONDS);
 
