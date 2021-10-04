@@ -36,9 +36,9 @@ public class TokenBucket {
         this.lastAcquireNanoSec = System.nanoTime();
     }
 
-    private boolean isSent = false;
+    private volatile boolean isSent = false;
 
-    public synchronized void send(long sendTime, AtomicInteger waiting, double curComputingRate, int port) {
+    public void send(long sendTime, AtomicInteger waiting, double curComputingRate, int port) {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
