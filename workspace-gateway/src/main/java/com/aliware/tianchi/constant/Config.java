@@ -16,7 +16,7 @@ public abstract class Config {
 
     public static final int RT_PROP_ESTIMATE_VALUE = 44;
 
-    public static final int RT_TIME_WINDOW = 10;
+    public static final int RT_TIME_WINDOW = 6;
 
     public static final int COMPUTING_RATE_WINDOW_FACTOR = 6;
 

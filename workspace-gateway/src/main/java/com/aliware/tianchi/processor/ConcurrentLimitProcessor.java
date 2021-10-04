@@ -228,7 +228,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(new RefreshGain(), 3000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-                RTPropEstimated = 240 * lastRTPropEstimated;
+                RTPropEstimated = 200 * lastRTPropEstimated;
             }
         }, 1000, RW, TimeUnit.MILLISECONDS);
 
