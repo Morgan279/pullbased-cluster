@@ -21,7 +21,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int GAIN_UNIT = 1;
 
-    private static final double[] GAIN_VALUES = {1.05, 0.95, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -80,7 +80,7 @@ public class ConcurrentLimitProcessor {
             if (ConcurrentLimitStatus.PROBE.equals(status)) {
                 computingRateEstimated = lastComputingRateEstimated;
             }
-            scheduledExecutorService.schedule(this, (long) (12D * RTPropEstimated), TimeUnit.MILLISECONDS);
+            scheduledExecutorService.schedule(this, (long) (8D * RTPropEstimated), TimeUnit.MILLISECONDS);
             //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
         }
     }
@@ -102,7 +102,7 @@ public class ConcurrentLimitProcessor {
         //return ConcurrentLimitStatus.FILL_UP.equals(this.status) ? Integer.MAX_VALUE : 1200;
         //return (int) Math.max(gain * Math.pow(computingRateEstimated, 2) * RTPropEstimated * threads * 16, 8d * threads);
         //return (int) (gain * computingRateEstimated * computingRateEstimated * RTPropEstimated * threads);
-        return (int) (computingRateEstimated * RTPropEstimated * threads * 256);
+        return (int) (computingRateEstimated * RTPropEstimated * threads * 32);
     }
 
 
@@ -123,7 +123,7 @@ public class ConcurrentLimitProcessor {
                 this.handleDrain(RTT, computingRate);
         }
 
-        tokenBucket.setRate(computingRateEstimated * 1.001);
+        tokenBucket.setRate(computingRateEstimated);
     }
 
     public void switchDrain() {
@@ -131,7 +131,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.DRAIN;
 //        tokenBucket.pacingGain = (Math.log(2) / 2);
-        tokenBucket.pacingGain = 0.5;
+        tokenBucket.pacingGain = 0.9;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -152,7 +152,7 @@ public class ConcurrentLimitProcessor {
 
         this.status = ConcurrentLimitStatus.FILL_UP;
         //tokenBucket.pacingGain = 2 / Math.log(2);
-        tokenBucket.pacingGain = 1.5;
+        tokenBucket.pacingGain = 1.1;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -228,9 +228,9 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(new RefreshGain(), 3000, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-                RTPropEstimated = lastRTPropEstimated;
+                RTPropEstimated = 360 * lastRTPropEstimated;
             }
-        }, RW, RW, TimeUnit.MILLISECONDS);
+        }, 1000, RW, TimeUnit.MILLISECONDS);
 
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
 //            if (congestion) {
