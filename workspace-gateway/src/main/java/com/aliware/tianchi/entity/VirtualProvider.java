@@ -74,28 +74,34 @@ public class VirtualProvider {
 
     public double getErrorRatio() {
         //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get() / 3);
-        return (double) error.get() / assigned.get() / 4D;
+        return Math.sqrt((double) error.get() / assigned.get());
     }
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-//        logger.info("RTT: {}", RTT);
-        if (RTT < 0.2) {
-            this.concurrentLimitProcessor.switchFillUp();
-        }
         double computingRate = (computed.get() - lastComputed) / RTT;
-        //logger.info("computingRate: {} inflight: {}", computingRate * RTT, inflightEstimate);
-        //logger.info("inflight: {} inflight2: {} comingDiff: {}", inflight / RTT, this.inflight.get(), comingNum.get() - lastComing);
-        this.concurrentLimitProcessor.onACK(RTT, computingRate);
+        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
         this.recordLatency(latency / (int) 1e6);
     }
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 10 * concurrentLimitProcessor.RTPropEstimated) {
+        if (now - lastSamplingTime > 100 * concurrentLimitProcessor.RTPropEstimated) {
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;
+        }
+    }
+
+    private int inflightEstimate = 0;
+
+    public void estimateInflight(int newInflight) {
+        long now = System.currentTimeMillis();
+        if (now - lastArriveTime > 1) {
+            inflightEstimate = newInflight;
+            lastArriveTime = now;
+        } else {
+            inflightEstimate = Math.max(inflightEstimate, newInflight);
         }
     }
 
@@ -109,6 +115,9 @@ public class VirtualProvider {
         }
     }
 
+    public void send() {
+        concurrentLimitProcessor.tokenBucket.send(waiting, concurrentLimitProcessor.RTPropEstimated);
+    }
 
     public void switchDrain() {
         this.concurrentLimitProcessor.switchDrain();

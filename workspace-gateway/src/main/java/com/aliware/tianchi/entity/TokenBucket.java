@@ -1,14 +1,10 @@
 package com.aliware.tianchi.entity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TokenBucket {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(TokenBucket.class);
 
     private double storedPermits;
 
@@ -38,16 +34,18 @@ public class TokenBucket {
 
     private volatile boolean isSent = false;
 
-    public void send(long sendTime, AtomicInteger waiting, double curComputingRate, int port) {
+    public void send(AtomicInteger waiting, double RTPropEstimated) {
         if (isSent) return;
         isSent = true;
-        long now = (long) (elapsedNanos + (sendTime - lastAcquireNanoSec) / 1e3);
-        //long interval = (long) (waiting.get() / (pacingGain * (curComputingRate / 1e3)));
-        //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}#?{}", port, now, interval, computingRate, curComputingRate, waiting.get(), pacingGain);
+        long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        if (ThreadLocalRandom.current().nextDouble() < 0.008 / RTPropEstimated) {
+            pacingGain *= 100;
+        }
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
+        //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);
-        elapsedNanos = now;
         lastAcquireNanoSec = System.nanoTime();
+        elapsedNanos = now;
         isSent = false;
     }
 
