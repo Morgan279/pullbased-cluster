@@ -38,10 +38,12 @@ public class TokenBucket {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
-        if (ThreadLocalRandom.current().nextDouble() < 0.01 / RTPropEstimated) {
-            pacingGain *= 100;
+        synchronized (this){
+            if (ThreadLocalRandom.current().nextDouble() < 0.006 / RTPropEstimated) {
+                pacingGain *= 100;
+            }
+            nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         }
-        nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);
         lastAcquireNanoSec = System.nanoTime();
