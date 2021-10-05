@@ -1,5 +1,6 @@
 package com.aliware.tianchi.entity;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,10 +34,13 @@ public class TokenBucket {
 
     private volatile boolean isSent = false;
 
-    public void send(AtomicInteger waiting) {
+    public void send(AtomicInteger waiting, double RTPropEstimated) {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        if (ThreadLocalRandom.current().nextDouble() < 0.005 / RTPropEstimated) {
+            pacingGain *= 100;
+        }
         nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);

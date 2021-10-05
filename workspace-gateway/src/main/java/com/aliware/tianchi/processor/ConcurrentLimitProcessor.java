@@ -156,9 +156,6 @@ public class ConcurrentLimitProcessor {
                 computingRateEstimate = computingRate;
                 lastSamplingTime = now;
             }
-            if (ThreadLocalRandom.current().nextDouble() < 0.005 / RTPropEstimated) {
-                tokenBucket.pacingGain *= 100;
-            }
         }
 
     }

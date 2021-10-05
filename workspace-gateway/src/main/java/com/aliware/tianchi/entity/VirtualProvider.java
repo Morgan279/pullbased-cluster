@@ -115,6 +115,9 @@ public class VirtualProvider {
         }
     }
 
+    public void send() {
+        concurrentLimitProcessor.tokenBucket.send(waiting, concurrentLimitProcessor.RTPropEstimated);
+    }
 
     public void switchDrain() {
         this.concurrentLimitProcessor.switchDrain();

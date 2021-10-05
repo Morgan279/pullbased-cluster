@@ -34,7 +34,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()){
             Thread.yield();
         }
-        virtualProvider.concurrentLimitProcessor.tokenBucket.send(virtualProvider.waiting);
+        virtualProvider.send();
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
