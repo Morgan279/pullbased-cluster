@@ -90,7 +90,7 @@ public class ConcurrentLimitProcessor {
     }
 
 
-    public void onACK(double RTT, long averageRT, double computingRate, double comingRate) {
+    public void onACK(double RTT, long averageRT, double computingRate) {
         lastRTPropEstimated = RTT;
 
         switch (status) {
@@ -156,9 +156,9 @@ public class ConcurrentLimitProcessor {
                 computingRateEstimate = computingRate;
                 lastSamplingTime = now;
             }
-//            else {
-//                computingRateEstimate = Math.max(computingRateEstimate, computingRate);
-//            }
+            if (ThreadLocalRandom.current().nextDouble() < 0.005 / RTPropEstimated) {
+                tokenBucket.pacingGain *= 100;
+            }
         }
 
     }

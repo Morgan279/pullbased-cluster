@@ -24,9 +24,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        long now = System.nanoTime();
-//        logger.info("arrive interval: {}", (now - virtualProvider.arriveTime) / 1e6);
-//        virtualProvider.arriveTime = now;
 
 //
         if (virtualProvider.isConcurrentLimited()) {
@@ -38,16 +35,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             Thread.yield();
         }
         virtualProvider.concurrentLimitProcessor.tokenBucket.send(virtualProvider.waiting);
-//        while (virtualProvider.isConcurrentLimited()) {
-//            Thread.yield();
-//        }
-//        while (virtualProvider.concurrentLimitProcessor.funnel.poll() == null) {
-//            Thread.yield();
-//        }
-
-//        virtualProvider.concurrentLimitProcessor.tokenBucket.acquire();
-
-        //int lastComing = virtualProvider.comingNum.getAndIncrement();
 
         invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
@@ -64,15 +51,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 long latency = System.nanoTime() - startTime;
 //                logger.info("RTT: {}", latency / 1e6);
                 virtualProvider.computed.incrementAndGet();
-//                inflight = Math.max(inflight, virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed));
-//
-//                logger.info("coming: {}, computed: {}, inflight: {}, rate: {}",
-//                        virtualProvider.comingNum.get() - lastComing,
-//                        virtualProvider.computed.get() - lastComputed,
-//                        inflight,
-//                        (virtualProvider.computed.get() - lastComputed) / (latency / 1e6)
-//                );
-                virtualProvider.onComputed(latency, lastComputed, 0);
+                virtualProvider.onComputed(latency, lastComputed);
             } else {
                 virtualProvider.error.incrementAndGet();
             }

@@ -74,18 +74,13 @@ public class VirtualProvider {
 
     public double getErrorRatio() {
         //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get() / 3);
-        return (double) error.get() / assigned.get() / 3;
+        return Math.sqrt((double) error.get() / assigned.get());
     }
 
-    public void onComputed(long latency, int lastComputed, int lastComing) {
+    public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-        if (RTT < 3) {
-            this.concurrentLimitProcessor.switchFillUp();
-        }
         double computingRate = (computed.get() - lastComputed) / RTT;
-        //logger.info("computingRate: {} inflight: {}", computingRate * RTT, inflightEstimate);
-        //logger.info("inflight: {} inflight2: {} comingDiff: {}", inflight / RTT, this.inflight.get(), comingNum.get() - lastComing);
-        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate, 0);
+        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
         this.recordLatency(latency / (int) 1e6);
     }
 
