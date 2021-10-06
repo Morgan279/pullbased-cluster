@@ -29,8 +29,8 @@ public class UserLoadBalance implements LoadBalance {
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
         while (true) {
-//            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-            Invoker<T> selected = selectMinWaitingInvoker(invokers);
+            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//            Invoker<T> selected = selectMinWaitingInvoker(invokers);
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
             if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
                 return selected;
