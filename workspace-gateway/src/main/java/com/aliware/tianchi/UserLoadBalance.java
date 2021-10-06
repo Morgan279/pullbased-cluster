@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,15 +27,15 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        while (true) {
-            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-//            Invoker<T> selected = selectMinWaitingInvoker(invokers);
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
-            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
-                return selected;
-            }
-        }
-        //return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//        while (true) {
+//            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+////            Invoker<T> selected = selectMinWaitingInvoker(invokers);
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
+//            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+//                return selected;
+//            }
+//        }
+        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
         //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
