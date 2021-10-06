@@ -1,6 +1,7 @@
 package com.aliware.tianchi.entity;
 
-import java.util.concurrent.ThreadLocalRandom;
+import io.netty.util.internal.ThreadLocalRandom;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
