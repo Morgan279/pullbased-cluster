@@ -34,20 +34,21 @@ public class TokenBucket {
 
     private volatile boolean isSent = false;
 
+    private int probe = 1;
+
     public void send(AtomicInteger waiting, double RTPropEstimated) {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
-        synchronized (this){
-            if (ThreadLocalRandom.current().nextDouble() < 0.001 / RTPropEstimated) {
-                pacingGain *= 100;
-            }
-            nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
+        if (ThreadLocalRandom.current().nextDouble() < 0.003 / RTPropEstimated) {
+            probe = 50;
         }
+        nextSendTime = (long) (now + waiting.get() / (pacingGain * probe * (computingRate / 1e3)));
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);
         lastAcquireNanoSec = System.nanoTime();
         elapsedNanos = now;
+        probe = 1;
         isSent = false;
     }
 
