@@ -42,8 +42,8 @@ public class TokenBucket {
         isSent = true;
         long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
         synchronized (this) {
-            if (ThreadLocalRandom.current().nextDouble() < 0.004 / RTPropEstimated) {
-                probe = 16;
+            if (ThreadLocalRandom.current().nextDouble() < 0.005 / RTPropEstimated) {
+                probe = 12;
             }
             nextSendTime = (long) (now + waiting.get() / (pacingGain * probe * (computingRate / 1e3)));
         }
