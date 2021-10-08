@@ -65,11 +65,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        if (t.getMessage().contains("thread pool is exhausted")) {
-            logger.warn("exhausted");
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            virtualProvider.switchDrain();
-        }
-        //logger.error("onError", t);
+//        if (t.getMessage().contains("thread pool is exhausted")) {
+//            logger.warn("exhausted");
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            virtualProvider.switchDrain();
+//        }
+        logger.error("TestClientFilter onError:", t);
     }
 }
