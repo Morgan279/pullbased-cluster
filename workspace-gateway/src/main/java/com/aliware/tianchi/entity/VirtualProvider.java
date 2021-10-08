@@ -60,7 +60,7 @@ public class VirtualProvider {
     }
 
     public long getLatencyThreshold() {
-        return Math.max((long) (this.averageRTT * 1.5), 7);
+        return Math.max((long) (this.averageRTT * 1.1), 7);
     }
 
     public boolean isConcurrentLimited() {

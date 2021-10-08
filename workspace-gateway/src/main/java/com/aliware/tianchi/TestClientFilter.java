@@ -43,12 +43,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            virtualProvider.refreshErrorSampling();
 //            virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
+            virtualProvider.computed.incrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
 //            logger.info("RTT: {}", latency / 1e6);
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
-                virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             }
 //            else {
@@ -65,11 +65,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-//        if (t.getMessage().contains("thread pool is exhausted")) {
-//            logger.warn("exhausted");
-//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//            virtualProvider.switchDrain();
-//        }
-        logger.error("TestClientFilter onError:", t);
+        if (t.getMessage() != null && t.getMessage().contains("thread pool is exhausted")) {
+            logger.warn("exhausted");
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            virtualProvider.switchDrain();
+        }
+//        logger.error("TestClientFilter onError:", t);
     }
 }
