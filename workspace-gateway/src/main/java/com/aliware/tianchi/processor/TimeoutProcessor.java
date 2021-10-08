@@ -12,6 +12,8 @@ public class TimeoutProcessor<T> implements Runnable {
 
     private final Queue<FutureFlow<T>> futureFlowQueue;
 
+    //   private final ConcurrentSkipListSet<FutureFlow<T>> concurrentSkipListSet = new ConcurrentSkipListSet<>(FutureFlow::compare);
+
     public TimeoutProcessor() {
         this.futureFlowQueue = new ConcurrentLinkedQueue<>();
         new Thread(this).start();
@@ -19,6 +21,7 @@ public class TimeoutProcessor<T> implements Runnable {
 
     public void addFuture(Future<T> future, int port) {
         futureFlowQueue.offer(new FutureFlow<>(future, port));
+        //concurrentSkipListSet.add(new FutureFlow<>(future, port));
     }
 
     @Override
@@ -30,6 +33,7 @@ public class TimeoutProcessor<T> implements Runnable {
                 VirtualProvider virtualProvider = Supervisor.getVirtualProvider(futureFlow.getPort());
                 if (futureFlow.getRetentionTime() > virtualProvider.getLatencyThreshold()) {
                     futureFlow.forceTimeout();
+                    //virtualProvider.inflight.decrementAndGet();
                 } else {
                     futureFlowQueue.add(futureFlow);
                 }

@@ -1,9 +1,6 @@
 package com.aliware.tianchi.entity;
 
 
-import org.apache.dubbo.rpc.RpcException;
-
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
@@ -20,7 +17,11 @@ public class FutureFlow<T> {
         this.boxingTime = System.currentTimeMillis();
     }
 
-    public long getRetentionTime(){
+    public static <T> int compare(FutureFlow<T> f1, FutureFlow<T> f2) {
+        return Long.compare(f2.getRetentionTime(), f1.getRetentionTime());
+    }
+
+    public long getRetentionTime() {
         return System.currentTimeMillis() - boxingTime;
     }
 
@@ -29,7 +30,8 @@ public class FutureFlow<T> {
     }
 
     public void forceTimeout() {
-        ((CompletableFuture<T>) future).completeExceptionally(new RpcException("force timeout"));
+        //((CompletableFuture<T>) future).completeExceptionally(new RpcException("force timeout"));
+        future.cancel(true);
     }
 
     public int getPort() {

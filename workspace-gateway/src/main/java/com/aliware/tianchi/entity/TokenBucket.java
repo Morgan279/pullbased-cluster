@@ -1,6 +1,5 @@
 package com.aliware.tianchi.entity;
 
-import io.netty.util.internal.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,14 +8,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TokenBucket {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(VirtualProvider.class);
-
+    private final static Logger LOGGER = LoggerFactory.getLogger(TokenBucket.class);
 
     private double storedPermits;
 
     private volatile double grantInterval;
 
-    private long elapsedMircros;
+    private long elapsedMicroSec;
 
     private long lastAcquireMicroSec;
 
@@ -24,7 +22,7 @@ public class TokenBucket {
 
     public volatile double pacingGain;
 
-    public long nextSendTime = 0;
+    public long nextSendTime;
 
     private double computingRate;
 
@@ -33,51 +31,53 @@ public class TokenBucket {
         this.computingRate = computingRate;
         this.pacingGain = pacingGain;
         this.storedPermits = 0D;
-        this.elapsedMircros = 0L;
+        this.elapsedMicroSec = 0L;
         this.nextFreeTime = 0L;
+        this.nextSendTime = 0L;
         this.lastAcquireMicroSec = System.nanoTime();
     }
 
     private volatile boolean isSent = false;
 
-    private int probe = 1;
+//    private int probe = 1;
 
-    public void send(AtomicInteger waiting, double RTPropEstimated) {
+    public void send(AtomicInteger waiting, double RTPropEstimated, int port) {
         if (isSent) return;
         isSent = true;
-        int waitingNum = waiting.get() + 1;
-        long now = (long) (elapsedMircros + (System.nanoTime() - lastAcquireMicroSec) / 1e3);
-        double interval = waitingNum / (pacingGain * (computingRate / 1e3));
-        synchronized (this) {
-            if (ThreadLocalRandom.current().nextDouble() < 0.0024 / RTPropEstimated) {
-                interval = 1 / (Math.sqrt(interval) + 1);
-//                LOGGER.info("interval: {}", interval);
-            }
-            nextSendTime = (long) (now + waitingNum / interval);
-//            LOGGER.info("nextSendTime: {} interval: {}", nextSendTime, interval);
-        }
-        //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
+        long now = (long) (elapsedMicroSec + (System.nanoTime() - lastAcquireMicroSec) / 1e3);
+//        int waitingNum = waiting.get() + 1;
+//        double interval = waitingNum / (pacingGain * (computingRate / 1e3));
+//        synchronized (this) {
+//            if (ThreadLocalRandom.current().nextDouble() < 0.0024 / RTPropEstimated) {
+//                interval = 1 / (Math.sqrt(interval) + 1);
+////                LOGGER.info("interval: {}", interval);
+//            }
+//            nextSendTime = (long) (now + waitingNum / interval);
+////            LOGGER.info("nextSendTime: {} interval: {}", nextSendTime, interval);
+//        }
+        nextSendTime = (long) (now + waiting.get() / (pacingGain * (computingRate / 1e3)));
+        LOGGER.info("{}port#?{}#?{}#?{}#?{}", port, now, RTPropEstimated, nextSendTime - now, waiting.get());
         waiting.set(0);
         lastAcquireMicroSec = System.nanoTime();
-        elapsedMircros = now;
+        elapsedMicroSec = now;
 //        probe = 1;
         isSent = false;
     }
 
     public boolean canSend() {
-        long now = (long) (elapsedMircros + (System.nanoTime() - lastAcquireMicroSec) / 1e3);
+        long now = (long) (elapsedMicroSec + (System.nanoTime() - lastAcquireMicroSec) / 1e3);
         return now >= nextSendTime;
     }
 
     public void acquire() {
-        long now = elapsedMircros + System.nanoTime() - lastAcquireMicroSec;
+        long now = elapsedMicroSec + System.nanoTime() - lastAcquireMicroSec;
         long waitTime = getWaitTime(now);
         try {
             TimeUnit.NANOSECONDS.sleep(waitTime);
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
-        elapsedMircros = now;
+        elapsedMicroSec = now;
         lastAcquireMicroSec = System.nanoTime();
     }
 

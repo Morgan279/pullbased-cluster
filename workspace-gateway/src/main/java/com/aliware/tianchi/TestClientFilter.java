@@ -1,6 +1,5 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
@@ -25,7 +24,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-//
         if (virtualProvider.isConcurrentLimited()) {
             throw new RpcException();
         }
@@ -36,25 +34,26 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
         virtualProvider.send();
 
-        invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         int lastComputed = virtualProvider.computed.get();
         virtualProvider.inflight.incrementAndGet();
+        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-            virtualProvider.refreshErrorSampling();
-            virtualProvider.assigned.incrementAndGet();
+//            virtualProvider.refreshErrorSampling();
+//            virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
+//            logger.info("RTT: {}", latency / 1e6);
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
-//                logger.info("RTT: {}", latency / 1e6);
                 virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
-            } else {
-                virtualProvider.error.incrementAndGet();
             }
+//            else {
+//                virtualProvider.error.incrementAndGet();
+//            }
         });
 
     }
@@ -67,7 +66,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         if (t.getMessage().contains("thread pool is exhausted")) {
-            //logger.warn("exhausted");
+            logger.warn("exhausted");
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             virtualProvider.switchDrain();
         }

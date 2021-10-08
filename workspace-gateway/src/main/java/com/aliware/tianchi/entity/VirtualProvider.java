@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
 
-    private final static Logger logger = LoggerFactory.getLogger(VirtualProvider.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(VirtualProvider.class);
 
     //private final ScheduledExecutorService scheduledExecutorService;
 
@@ -42,8 +42,6 @@ public class VirtualProvider {
 
     private volatile long lastSamplingTime = System.currentTimeMillis();
 
-    public volatile long lastArriveTime = System.currentTimeMillis();
-
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -67,8 +65,7 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        //logger.info("inflight: {} bound: {}", inflightEstimate, concurrentLimitProcessor.getInflightBound());
-        //return inflightEstimate > concurrentLimitProcessor.getInflightBound();
+        LOGGER.info("inflight: {} bound: {} computing rate: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(), concurrentLimitProcessor.computingRateEstimated);
         return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
@@ -79,7 +76,11 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+//        if (RTT < 0) {
+//            concurrentLimitProcessor.switchFillUp();
+//        }
         double computingRate = (computed.get() - lastComputed) / RTT;
+//        LOGGER.info("avg: {}", averageRTT);
         this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
         this.recordLatency(latency / (int) 1e6);
     }
@@ -90,18 +91,6 @@ public class VirtualProvider {
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;
-        }
-    }
-
-    private int inflightEstimate = 0;
-
-    public void estimateInflight(int newInflight) {
-        long now = System.currentTimeMillis();
-        if (now - lastArriveTime > 1) {
-            inflightEstimate = newInflight;
-            lastArriveTime = now;
-        } else {
-            inflightEstimate = Math.max(inflightEstimate, newInflight);
         }
     }
 
@@ -116,7 +105,7 @@ public class VirtualProvider {
     }
 
     public void send() {
-        concurrentLimitProcessor.tokenBucket.send(waiting, concurrentLimitProcessor.RTPropEstimated);
+        concurrentLimitProcessor.tokenBucket.send(waiting, concurrentLimitProcessor.lastRTPropEstimated, port);
     }
 
     public void switchDrain() {

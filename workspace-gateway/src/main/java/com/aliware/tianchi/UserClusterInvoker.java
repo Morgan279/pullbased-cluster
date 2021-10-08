@@ -1,8 +1,10 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.processor.TimeoutProcessor;
-import org.apache.dubbo.rpc.*;
+import org.apache.dubbo.rpc.Invocation;
+import org.apache.dubbo.rpc.Invoker;
+import org.apache.dubbo.rpc.Result;
+import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
@@ -17,11 +19,11 @@ import java.util.List;
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
-    private final TimeoutProcessor<T> timeoutProcessor;
+    //private final TimeoutProcessor<T> timeoutProcessor;
 
     public UserClusterInvoker(Directory<T> directory) {
         super(directory);
-        this.timeoutProcessor = new TimeoutProcessor<>();
+        //this.timeoutProcessor = new TimeoutProcessor<>();
         for (Invoker<T> invoker : directory.getAllInvokers()) {
             Supervisor.registerProvider(invoker);
         }
@@ -30,9 +32,10 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
-        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
-        Result result = selectedInvoker.invoke(invocation);
-        timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture(), selectedInvoker.getUrl().getPort());
-        return result;
+        return loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
+//        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
+//        Result result = selectedInvoker.invoke(invocation);
+//        //timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture(), selectedInvoker.getUrl().getPort());
+//        return result;
     }
 }

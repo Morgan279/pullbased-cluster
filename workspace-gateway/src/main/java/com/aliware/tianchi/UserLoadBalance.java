@@ -2,7 +2,6 @@ package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
-import io.netty.util.internal.ThreadLocalRandom;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
@@ -28,16 +27,16 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
-        while (true) {
-            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-//            Invoker<T> selected = selectMinWaitingInvoker(invokers);
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
-            // LOGGER.info("error ratio: {}", virtualProvider.getErrorRatio());
-            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
-                return selected;
-            }
-        }
-//        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//        while (true) {
+//            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+////            Invoker<T> selected = selectMinWaitingInvoker(invokers);
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
+//            // LOGGER.info("error ratio: {}", virtualProvider.getErrorRatio());
+//            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+//                return selected;
+//            }
+//        }
+        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
         //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
