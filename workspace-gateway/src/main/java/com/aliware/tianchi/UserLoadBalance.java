@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class UserLoadBalance implements LoadBalance {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
 
     private final AtomicInteger ROUND_COUNTER = new AtomicInteger(0);
 
@@ -32,6 +32,7 @@ public class UserLoadBalance implements LoadBalance {
             Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
 //            Invoker<T> selected = selectMinWaitingInvoker(invokers);
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
+            // LOGGER.info("error ratio: {}", virtualProvider.getErrorRatio());
             if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
                 return selected;
             }

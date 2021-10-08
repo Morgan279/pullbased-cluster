@@ -74,7 +74,7 @@ public class VirtualProvider {
 
     public double getErrorRatio() {
         //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get() / 3);
-        return Math.sqrt((double) error.get() / assigned.get());
+        return Math.pow(error.get() * 100D / assigned.get(), 0.8D) / 100;
     }
 
     public void onComputed(long latency, int lastComputed) {
