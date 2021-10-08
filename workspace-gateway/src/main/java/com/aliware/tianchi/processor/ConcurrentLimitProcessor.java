@@ -117,7 +117,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        tokenBucket.pacingGain = (Math.log(2) / 2);
+        tokenBucket.pacingGain = 0.5;
 
 
         scheduledExecutorService.schedule(() -> {

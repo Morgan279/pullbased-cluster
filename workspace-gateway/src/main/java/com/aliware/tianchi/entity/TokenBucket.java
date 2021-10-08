@@ -41,11 +41,12 @@ public class TokenBucket {
         if (isSent) return;
         isSent = true;
         long now = (long) (elapsedNanos + (System.nanoTime() - lastAcquireNanoSec) / 1e3);
+        double interval  = waiting.get() / (pacingGain * probe * (computingRate / 1e3));
         synchronized (this) {
-            if (ThreadLocalRandom.current().nextDouble() < 0.0032 / RTPropEstimated) {
-                probe = 60;
+            if (ThreadLocalRandom.current().nextDouble() < 0.0024 / RTPropEstimated) {
+                interval = Math.sqrt(interval);
             }
-            nextSendTime = (long) (now + waiting.get() / (pacingGain * probe * (computingRate / 1e3)));
+            nextSendTime = (long) (now + waiting.get() / interval);
         }
         //System.out.println("now: " + now + " nextSendTime: " + nextSendTime + "  waiting: " + waiting.get());
         waiting.set(0);
