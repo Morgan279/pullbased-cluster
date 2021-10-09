@@ -2,6 +2,7 @@ package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
+import com.aliware.tianchi.entity.WorkLoad;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
@@ -27,6 +28,16 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
+        WorkLoad workLoad;
+        while ((workLoad = Supervisor.workLoads.pollFirst()) == null) {
+            Thread.yield();
+        }
+        for (Invoker<T> invoker : invokers) {
+            if (invoker.getUrl().getPort() == workLoad.port) {
+                return invoker;
+            }
+        }
+        throw new RpcException("no available provider");
 //        while (true) {
 //            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
 ////            Invoker<T> selected = selectMinWaitingInvoker(invokers);
@@ -37,7 +48,7 @@ public class UserLoadBalance implements LoadBalance {
 //            }
 //        }
 //        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-        return selectMinWaitingInvoker(invokers);
+//        return selectMinWaitingInvoker(invokers);
     }
 
     private <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {

@@ -7,10 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Supervisor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Supervisor.class);
+
+    public static ConcurrentSkipListSet<WorkLoad> workLoads = new ConcurrentSkipListSet<>(WorkLoad::compare);
 
     public static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
 

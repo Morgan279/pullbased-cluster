@@ -58,6 +58,9 @@ public class VirtualProvider {
         this.comingNum = new AtomicInteger(0);
         this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
+        for (int i = 0, len = (int) (threads * 0.6); i < len; ++i) {
+            Supervisor.workLoads.add(new WorkLoad(port, 3));
+        }
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
 
@@ -78,12 +81,17 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-//        if (RTT < 0) {
-//            concurrentLimitProcessor.switchFillUp();
-//        }
+        if (RTT < 5) {
+            for (int i = 0; i < 3; ++i) {
+                Supervisor.workLoads.pollLast();
+                Supervisor.workLoads.add(new WorkLoad(port, 0));
+            }
+            //concurrentLimitProcessor.switchFillUp();
+        }
         double computingRate = (computed.get() - lastComputed) / RTT;
 //        LOGGER.info("avg: {}", averageRTT);
         this.concurrentLimitProcessor.onACK(RTT, computingRate);
+        LOGGER.info("{}port#?{}#?{}#?{}", port, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound());
         this.recordLatency(latency / (int) 1e6);
     }
 

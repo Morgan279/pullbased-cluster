@@ -17,19 +17,18 @@ import org.slf4j.LoggerFactory;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserLoadBalance.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-
-        virtualProvider.waiting.incrementAndGet();
-        while (virtualProvider.isConcurrentLimited()) {
-            Thread.yield();
-        }
+//        virtualProvider.waiting.incrementAndGet();
+//        while (virtualProvider.isConcurrentLimited()) {
+//            Thread.yield();
+//        }
         virtualProvider.inflight.incrementAndGet();
-        virtualProvider.waiting.decrementAndGet();
+//        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
 
