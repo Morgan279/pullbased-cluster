@@ -27,15 +27,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        if(virtualProvider.isConcurrentLimited()){
-            throw new RpcException();
+        virtualProvider.waiting.incrementAndGet();
+        while (virtualProvider.isConcurrentLimited()) {
+            Thread.yield();
         }
-        //virtualProvider.waiting.incrementAndGet();
-//        while (virtualProvider.isConcurrentLimited()) {
-//            Thread.yield();
-//        }
         virtualProvider.inflight.incrementAndGet();
-        //virtualProvider.waiting.decrementAndGet();
+        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
