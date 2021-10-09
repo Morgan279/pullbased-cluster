@@ -42,6 +42,8 @@ public class VirtualProvider {
 
     private volatile long lastSamplingTime = System.currentTimeMillis();
 
+    public long recentMaxLatency = 0;
+
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -65,7 +67,7 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        LOGGER.info("inflight: {} computing rate: {}", inflight.get(), concurrentLimitProcessor.computingRateEstimated);
+        //LOGGER.info("inflight: {} computing rate: {}", inflight.get(), concurrentLimitProcessor.computingRateEstimated);
         return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
@@ -81,7 +83,7 @@ public class VirtualProvider {
 //        }
         double computingRate = (computed.get() - lastComputed) / RTT;
 //        LOGGER.info("avg: {}", averageRTT);
-        this.concurrentLimitProcessor.onACK(RTT, this.averageRTT, computingRate);
+        this.concurrentLimitProcessor.onACK(RTT, computingRate);
         this.recordLatency(latency / (int) 1e6);
     }
 
@@ -95,17 +97,19 @@ public class VirtualProvider {
     }
 
     private synchronized void recordLatency(long latency) {
-        sum += latency;
-        ++counter;
-        if (counter == SAMPLING_COUNT) {
-            averageRTT = sum / counter;
-            sum = 0;
-            counter = 0;
+        counter = (counter + 1) % 10;
+        if (counter == 9) {
+            recentMaxLatency = latency;
+        } else {
+            recentMaxLatency = Math.max(recentMaxLatency, latency);
         }
-    }
-
-    public void send() {
-        concurrentLimitProcessor.tokenBucket.send(waiting, concurrentLimitProcessor.lastRTPropEstimated, port);
+//        sum += latency;
+//        ++counter;
+//        if (counter == SAMPLING_COUNT) {
+//            averageRTT = sum / counter;
+//            sum = 0;
+//            counter = 0;
+//        }
     }
 
     public void switchDrain() {

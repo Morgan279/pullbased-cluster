@@ -1,7 +1,6 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.constant.Config;
-import com.aliware.tianchi.entity.TokenBucket;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
@@ -17,13 +16,13 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.1, 0.9, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -41,6 +40,8 @@ public class ConcurrentLimitProcessor {
 
     public volatile double computingRateEstimated;
 
+    public volatile double lastComputingRateEstimated;
+
     public ConcurrentLinkedQueue<Boolean> funnel;
 
     //private final ScheduledExecutorService funnelScheduler = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("funnel-timer", true));
@@ -50,8 +51,6 @@ public class ConcurrentLimitProcessor {
     private volatile boolean congestion;
 
     private final int threads;
-
-    public TokenBucket tokenBucket;
 
     public ConcurrentLimitProcessor(int threads) {
         this.threads = threads;
@@ -63,7 +62,6 @@ public class ConcurrentLimitProcessor {
         this.computingRateEstimated = threads / 10D;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        this.tokenBucket = new TokenBucket(computingRateEstimated, 2 / Math.log(2));
         //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
@@ -85,17 +83,16 @@ public class ConcurrentLimitProcessor {
     }
 
     public int getInflightBound() {
-        return threads;
-        //return (int) (computingRateEstimated * RTPropEstimated);
+        return (int) (gain * computingRateEstimated * RTPropEstimated * 2);
     }
 
 
-    public void onACK(double RTT, long averageRT, double computingRate) {
+    public void onACK(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
-
+        lastComputingRateEstimated = computingRate;
         switch (status) {
             case PROBE:
-                this.handleProbe(RTT, averageRT, computingRate);
+                this.handleProbe(RTT, computingRate);
                 break;
 
             case FILL_UP:
@@ -106,14 +103,13 @@ public class ConcurrentLimitProcessor {
                 this.handleDrain(computingRate);
         }
 
-        tokenBucket.setRate(computingRateEstimated);
     }
 
     public void switchDrain() {
         if (ConcurrentLimitStatus.DRAIN.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.DRAIN;
-        tokenBucket.pacingGain = 0.5;
+        gain = 0.5;
 
 
         scheduledExecutorService.schedule(() -> {
@@ -132,7 +128,7 @@ public class ConcurrentLimitProcessor {
         if (ConcurrentLimitStatus.FILL_UP.equals(this.status)) return;
 
         this.status = ConcurrentLimitStatus.FILL_UP;
-        tokenBucket.pacingGain = 2;
+        gain = 2;
 
         scheduledExecutorService.schedule(() -> {
             roundCounter.set(1);
@@ -140,26 +136,11 @@ public class ConcurrentLimitProcessor {
         }, 1, TimeUnit.MILLISECONDS);
     }
 
-    private void handleProbe(double RTT, long averageRT, double computingRate) {
-        long now = System.currentTimeMillis();
-
-        if (now - lastPhaseStartedTime > RTPropEstimated) {
-            tokenBucket.pacingGain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-            lastPhaseStartedTime = now;
-        }
+    private void handleProbe(double RTT, double computingRate) {
 
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
-            now = System.currentTimeMillis();
-            if (now - lastSamplingTime > CW_FACTOR * averageRT) {
-                if (computingRate > computingRateEstimated) {
-                    congestion = false;
-                }
-                computingRateEstimated = computingRate;
-                lastSamplingTime = now;
-            } else {
-                computingRateEstimated = Math.max(computingRateEstimated, computingRate);
-            }
+            computingRateEstimated = Math.max(computingRateEstimated, computingRate);
         }
 
     }
@@ -184,15 +165,23 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-                RTPropEstimated = lastRTPropEstimated;
+                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
             }
-        }, RW, RW, TimeUnit.MILLISECONDS);
+        }, 1000, 3, TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            if (congestion) {
-                this.switchDrain();
+            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+                computingRateEstimated = lastComputingRateEstimated;
+                RTPropEstimated = lastRTPropEstimated;
             }
-        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
+        }, 1000, 24, TimeUnit.MILLISECONDS);
+
+
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            if (congestion) {
+//                this.switchDrain();
+//            }
+//        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private enum ConcurrentLimitStatus {

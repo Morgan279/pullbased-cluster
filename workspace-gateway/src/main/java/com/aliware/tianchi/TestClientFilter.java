@@ -24,19 +24,14 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        if (virtualProvider.isConcurrentLimited()) {
-            throw new RpcException();
-        }
-
         virtualProvider.waiting.incrementAndGet();
-        while (!virtualProvider.concurrentLimitProcessor.tokenBucket.canSend()){
+        while (virtualProvider.isConcurrentLimited()) {
             Thread.yield();
         }
-        virtualProvider.send();
-
-        int lastComputed = virtualProvider.computed.get();
         virtualProvider.inflight.incrementAndGet();
-        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
+        virtualProvider.waiting.decrementAndGet();
+        int lastComputed = virtualProvider.computed.get();
+
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
@@ -65,11 +60,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        if (t.getMessage() != null && t.getMessage().contains("thread pool is exhausted")) {
-            logger.warn("exhausted");
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            virtualProvider.switchDrain();
-        }
+//        if (t.getMessage() != null && t.getMessage().contains("thread pool is exhausted")) {
+//            logger.warn("exhausted");
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            virtualProvider.switchDrain();
+//        }
 //        logger.error("TestClientFilter onError:", t);
     }
 }

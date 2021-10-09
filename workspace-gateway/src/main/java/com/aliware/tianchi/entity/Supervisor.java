@@ -12,7 +12,7 @@ public class Supervisor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Supervisor.class);
 
-    private static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
+    public static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
 
     public static <T> void registerProvider(Invoker<T> invoker) {
         int port = invoker.getUrl().getPort();
@@ -26,4 +26,11 @@ public class Supervisor {
         return virtualProviderMap.get(port);
     }
 
+    public static long getLatencyThreshold() {
+        long threshold = 5000;
+        for (VirtualProvider virtualProvider : virtualProviderMap.values()) {
+            threshold = Math.min(threshold, virtualProvider.recentMaxLatency);
+        }
+        return threshold;
+    }
 }

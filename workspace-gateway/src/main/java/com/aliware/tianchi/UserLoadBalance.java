@@ -36,18 +36,18 @@ public class UserLoadBalance implements LoadBalance {
 //                return selected;
 //            }
 //        }
-        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+//        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+        return selectMinWaitingInvoker(invokers);
     }
 
     private <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
-        int minWaiting = Integer.MAX_VALUE;
-        Invoker<T> minWaitingInvoker = null;
-        for (Invoker<T> invoker : invokers) {
-            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+        int minWaiting = Supervisor.getVirtualProvider(invokers.get(0).getUrl().getPort()).waiting.get();
+        Invoker<T> minWaitingInvoker = invokers.get(0);
+        for (int i = 1; i < invokers.size(); ++i) {
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invokers.get(i).getUrl().getPort());
             if (virtualProvider.waiting.get() < minWaiting) {
                 minWaiting = virtualProvider.waiting.get();
-                minWaitingInvoker = invoker;
+                minWaitingInvoker = invokers.get(i);
             }
         }
         return minWaitingInvoker;
