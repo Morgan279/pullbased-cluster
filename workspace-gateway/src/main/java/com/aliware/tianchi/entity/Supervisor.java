@@ -34,6 +34,6 @@ public class Supervisor {
         for (VirtualProvider virtualProvider : virtualProviderMap.values()) {
             threshold = Math.min(threshold, virtualProvider.recentMaxLatency);
         }
-        return threshold;
+        return Math.max(threshold, 30);
     }
 }

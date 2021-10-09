@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
@@ -58,8 +59,8 @@ public class VirtualProvider {
         this.comingNum = new AtomicInteger(0);
         this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
-        for (int i = 0, len = (int) (threads * 0.6); i < len; ++i) {
-            Supervisor.workLoads.add(new WorkLoad(port, 3));
+        for (int i = 0, len = (int) (threads * 0.8); i < len; ++i) {
+            Supervisor.workLoads.add(new WorkLoad(port, 2 + ThreadLocalRandom.current().nextDouble()));
         }
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
@@ -84,14 +85,15 @@ public class VirtualProvider {
         if (RTT < 5) {
             for (int i = 0; i < 3; ++i) {
                 Supervisor.workLoads.pollLast();
-                Supervisor.workLoads.add(new WorkLoad(port, 0));
+                Supervisor.workLoads.add(new WorkLoad(port, ThreadLocalRandom.current().nextDouble()));
             }
             //concurrentLimitProcessor.switchFillUp();
         }
+        Supervisor.workLoads.add(new WorkLoad(port, RTT));
         double computingRate = (computed.get() - lastComputed) / RTT;
 //        LOGGER.info("avg: {}", averageRTT);
         this.concurrentLimitProcessor.onACK(RTT, computingRate);
-        LOGGER.info("{}port#?{}#?{}#?{}", port, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound());
+        LOGGER.info("{}port#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound());
         this.recordLatency(latency / (int) 1e6);
     }
 

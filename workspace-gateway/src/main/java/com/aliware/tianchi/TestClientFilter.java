@@ -2,11 +2,14 @@ package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
+import com.aliware.tianchi.entity.WorkLoad;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 客户端过滤器（选址后）
@@ -44,10 +47,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
                 virtualProvider.onComputed(latency, lastComputed);
+            } else {
+                //virtualProvider.error.incrementAndGet();
+                Supervisor.workLoads.add(new WorkLoad(port, Supervisor.getLatencyThreshold() + ThreadLocalRandom.current().nextDouble(Supervisor.getLatencyThreshold())));
             }
-//            else {
-//                virtualProvider.error.incrementAndGet();
-//            }
         });
 
     }

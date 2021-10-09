@@ -35,6 +35,7 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+//        LOGGER.info("getLatencyThreshold: {}", Supervisor.getLatencyThreshold());
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, Supervisor.getLatencyThreshold());
         return loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
 //        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
