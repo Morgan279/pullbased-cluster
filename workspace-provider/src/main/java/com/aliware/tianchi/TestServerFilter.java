@@ -1,10 +1,13 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.AttachmentKey;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 服务端过滤器
@@ -16,15 +19,18 @@ import org.slf4j.LoggerFactory;
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
-    
+
+    private AtomicInteger concurrency = new AtomicInteger(0);
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        concurrency.incrementAndGet();
         return invoker.invoke(invocation);
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-
+        invocation.setAttachment(AttachmentKey.CONCURRENT,String.valueOf(concurrency.decrementAndGet()));
     }
 
     @Override

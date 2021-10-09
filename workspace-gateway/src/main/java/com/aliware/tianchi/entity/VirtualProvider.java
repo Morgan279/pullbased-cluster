@@ -45,6 +45,8 @@ public class VirtualProvider {
 
     public long recentMaxLatency = 0;
 
+    public volatile int concurrency;
+
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -63,6 +65,10 @@ public class VirtualProvider {
 //            Supervisor.workLoads.add(new WorkLoad(port, 2 + ThreadLocalRandom.current().nextDouble()));
 //        }
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
+    }
+
+    public double getConcurrencyRatio(){
+        return (double) concurrency / threads;
     }
 
     public long getLatencyThreshold() {

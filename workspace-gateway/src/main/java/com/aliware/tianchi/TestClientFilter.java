@@ -1,5 +1,6 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
 import org.apache.dubbo.common.constants.CommonConstants;
@@ -58,7 +59,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-
+        VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+        virtualProvider.concurrency = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT));
+        LOGGER.info("{}'s concurrency ratio: {}",invoker.getUrl().getPort(),virtualProvider.getConcurrencyRatio());
     }
 
     @Override
