@@ -27,12 +27,15 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        virtualProvider.waiting.incrementAndGet();
-        while (virtualProvider.isConcurrentLimited()) {
-            Thread.yield();
+        if(virtualProvider.isConcurrentLimited()){
+            throw new RpcException();
         }
+        //virtualProvider.waiting.incrementAndGet();
+//        while (virtualProvider.isConcurrentLimited()) {
+//            Thread.yield();
+//        }
         virtualProvider.inflight.incrementAndGet();
-        virtualProvider.waiting.decrementAndGet();
+        //virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
@@ -60,7 +63,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-        LOGGER.info("{}'s concurrency: {}",invoker.getUrl().getPort(),appResponse.getAttachment(AttachmentKey.CONCURRENT));
+//        LOGGER.info("{}'s concurrency: {}",invoker.getUrl().getPort(),appResponse.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
         LOGGER.info("{}'s concurrency ratio: {}",invoker.getUrl().getPort(),virtualProvider.getConcurrencyRatio());
     }
