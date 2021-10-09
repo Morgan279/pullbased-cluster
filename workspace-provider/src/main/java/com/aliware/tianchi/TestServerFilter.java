@@ -30,7 +30,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        invocation.setAttachment(AttachmentKey.CONCURRENT,String.valueOf(concurrency.decrementAndGet()));
+        appResponse.setAttachment(AttachmentKey.CONCURRENT,String.valueOf(concurrency.decrementAndGet()));
     }
 
     @Override
