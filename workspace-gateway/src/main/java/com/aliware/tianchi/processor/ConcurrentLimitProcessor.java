@@ -83,7 +83,7 @@ public class ConcurrentLimitProcessor {
     }
 
     public int getInflightBound() {
-        return (int) Math.min(gain * computingRateEstimated * RTPropEstimated + 1, threads * 0.8);
+        return (int) Math.min(gain * computingRateEstimated * (1.5 + computingRateEstimated) * RTPropEstimated + 1, threads * 0.8);
     }
 
 
@@ -168,7 +168,7 @@ public class ConcurrentLimitProcessor {
 //            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
 //                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
 //            }
-        }, 1000, 5000, TimeUnit.MICROSECONDS);
+        }, 1000, 500, TimeUnit.MICROSECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             computingRateEstimated = lastComputingRateEstimated;
@@ -178,7 +178,6 @@ public class ConcurrentLimitProcessor {
 //                RTPropEstimated = lastRTPropEstimated;
 //            }
         }, 1000, 4, TimeUnit.MILLISECONDS);
-
 
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
 //            if (congestion) {
