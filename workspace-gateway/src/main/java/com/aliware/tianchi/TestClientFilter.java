@@ -2,14 +2,13 @@ package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
-import com.aliware.tianchi.entity.WorkLoad;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.CompletionException;
 
 /**
  * 客户端过滤器（选址后）
@@ -26,15 +25,16 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
-//        virtualProvider.waiting.incrementAndGet();
-//        while (virtualProvider.isConcurrentLimited()) {
-//            Thread.yield();
-//        }
+
+        virtualProvider.waiting.incrementAndGet();
+        while (virtualProvider.isConcurrentLimited()) {
+            Thread.yield();
+        }
         virtualProvider.inflight.incrementAndGet();
-//        virtualProvider.waiting.decrementAndGet();
+        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
-
+        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //            virtualProvider.refreshErrorSampling();
@@ -47,10 +47,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
                 virtualProvider.onComputed(latency, lastComputed);
-            } else {
-                //virtualProvider.error.incrementAndGet();
-                Supervisor.workLoads.add(new WorkLoad(port, 5000 * ThreadLocalRandom.current().nextDouble()));
             }
+//            else {
+//                //virtualProvider.error.incrementAndGet();
+//                Supervisor.workLoads.add(new WorkLoad(port, 5000 * ThreadLocalRandom.current().nextDouble()));
+//            }
         });
 
     }
@@ -67,6 +68,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
 //            virtualProvider.switchDrain();
 //        }
-        LOGGER.error("TestClientFilter onError:", t);
+
+//        LOGGER.info("t class: {}", t.getClass());
+        if (t.getClass().equals(CompletionException.class)) {
+            LOGGER.error("TestClientFilter onError: {}", t.getMessage());
+        }
     }
 }
