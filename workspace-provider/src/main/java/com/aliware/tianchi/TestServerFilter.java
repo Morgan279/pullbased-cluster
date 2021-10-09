@@ -20,7 +20,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
 
-    private AtomicInteger concurrency = new AtomicInteger(0);
+    private final AtomicInteger concurrency = new AtomicInteger(0);
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {

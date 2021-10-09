@@ -60,6 +60,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+        LOGGER.info("{}'s concurrency: {}",invoker.getUrl().getPort(),invocation.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.concurrency = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT));
         LOGGER.info("{}'s concurrency ratio: {}",invoker.getUrl().getPort(),virtualProvider.getConcurrencyRatio());
     }
