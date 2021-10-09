@@ -49,7 +49,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 virtualProvider.onComputed(latency, lastComputed);
             } else {
                 //virtualProvider.error.incrementAndGet();
-                Supervisor.workLoads.add(new WorkLoad(port, Supervisor.getLatencyThreshold() + ThreadLocalRandom.current().nextDouble(Supervisor.getLatencyThreshold())));
+                Supervisor.workLoads.add(new WorkLoad(port, 5000 * ThreadLocalRandom.current().nextDouble()));
             }
         });
 
@@ -67,6 +67,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
 //            virtualProvider.switchDrain();
 //        }
-//        logger.error("TestClientFilter onError:", t);
+        LOGGER.error("TestClientFilter onError:", t);
     }
 }

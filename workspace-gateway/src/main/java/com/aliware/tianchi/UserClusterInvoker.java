@@ -1,7 +1,7 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
-import org.apache.dubbo.common.constants.CommonConstants;
+import com.aliware.tianchi.processor.TimeoutProcessor;
 import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
@@ -19,13 +19,13 @@ import java.util.List;
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
-    //private final TimeoutProcessor<T> timeoutProcessor;
+    private final TimeoutProcessor<T> timeoutProcessor;
     private final static Logger LOGGER = LoggerFactory.getLogger(UserClusterInvoker.class);
 
 
     public UserClusterInvoker(Directory<T> directory) {
         super(directory);
-        //this.timeoutProcessor = new TimeoutProcessor<>();
+        this.timeoutProcessor = new TimeoutProcessor<>();
         for (Invoker<T> invoker : directory.getAllInvokers()) {
             Supervisor.registerProvider(invoker);
         }
@@ -35,12 +35,12 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
-//        LOGGER.info("getLatencyThreshold: {}", Supervisor.getLatencyThreshold());
-        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, Supervisor.getLatencyThreshold());
-        return loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
-//        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
-//        Result result = selectedInvoker.invoke(invocation);
-//        //timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture(), selectedInvoker.getUrl().getPort());
-//        return result;
+        LOGGER.info("Latency Threshold: {}", Supervisor.getLatencyThreshold());
+//        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, Supervisor.getLatencyThreshold());
+//        return loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
+        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
+        Result result = selectedInvoker.invoke(invocation);
+        timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture());
+        return result;
     }
 }

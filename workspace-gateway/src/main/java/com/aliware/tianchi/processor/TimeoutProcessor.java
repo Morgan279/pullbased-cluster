@@ -2,7 +2,6 @@ package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.entity.FutureFlow;
 import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.entity.VirtualProvider;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,8 +18,8 @@ public class TimeoutProcessor<T> implements Runnable {
         new Thread(this).start();
     }
 
-    public void addFuture(Future<T> future, int port) {
-        futureFlowQueue.offer(new FutureFlow<>(future, port));
+    public void addFuture(Future<T> future) {
+        futureFlowQueue.offer(new FutureFlow<>(future));
         //concurrentSkipListSet.add(new FutureFlow<>(future, port));
     }
 
@@ -30,8 +29,7 @@ public class TimeoutProcessor<T> implements Runnable {
         FutureFlow<T> futureFlow;
         while (true) {
             if ((futureFlow = futureFlowQueue.poll()) != null && !futureFlow.isDone()) {
-                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(futureFlow.getPort());
-                if (futureFlow.getRetentionTime() > virtualProvider.getLatencyThreshold()) {
+                if (futureFlow.getRetentionTime() > Supervisor.getLatencyThreshold()) {
                     futureFlow.forceTimeout();
                     //virtualProvider.inflight.decrementAndGet();
                 } else {
