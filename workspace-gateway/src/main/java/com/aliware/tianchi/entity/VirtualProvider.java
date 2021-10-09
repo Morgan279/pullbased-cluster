@@ -66,7 +66,7 @@ public class VirtualProvider {
     }
 
     public long getLatencyThreshold() {
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.2, 1.5));
+        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.5, 2));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
     }
 
