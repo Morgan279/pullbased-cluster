@@ -179,7 +179,7 @@ public class ConcurrentLimitProcessor {
 //            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
 //                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
 //            }
-        }, 1000, 1000, TimeUnit.MICROSECONDS);
+        }, 1000, 2, TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             RTPropEstimated = lastRTPropEstimated;
