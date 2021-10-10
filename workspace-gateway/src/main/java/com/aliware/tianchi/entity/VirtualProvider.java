@@ -76,7 +76,8 @@ public class VirtualProvider {
     }
 
     public long getLatencyThreshold() {
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.8, 2.4));
+        //return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.8, 2.4));
+        return (long) (Math.max(getPredict() * ThreadLocalRandom.current().nextDouble(0.9, 1.1), 3));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
     }
 
@@ -120,11 +121,11 @@ public class VirtualProvider {
     }
 
     private synchronized void recordLatency(double latency) {
-        counter = (counter + 1) % 10;
-        if (counter == 9) {
+        ++counter;
+        if (counter == 10) {
             recentMaxLatency = (long) latency;
             averageRTT = sum / 10D;
-            sum = 0;
+            sum = counter = 0;
         } else {
             sum += latency;
             recentMaxLatency = Math.max(recentMaxLatency, (long) latency);
