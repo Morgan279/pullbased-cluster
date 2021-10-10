@@ -63,7 +63,8 @@ public class ConcurrentLimitProcessor {
         this.congestion = false;
         this.RTPropEstimated = threads / 1000D;
         this.lastRTPropEstimated = RTPropEstimated;
-        this.computingRateEstimated = threads / 3D;
+        this.computingRateEstimated = threads;
+        this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
         //this.funnel = new ConcurrentLinkedQueue<>();
