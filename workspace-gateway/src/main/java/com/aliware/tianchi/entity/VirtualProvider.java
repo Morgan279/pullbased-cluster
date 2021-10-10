@@ -78,8 +78,8 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        //LOGGER.info("inflight: {} computing rate: {}", inflight.get(), concurrentLimitProcessor.computingRateEstimated);
-        return inflight.get() > concurrentLimitProcessor.getInflightBound();
+        //LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
+        return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
     }
 
     public double getErrorRatio() {

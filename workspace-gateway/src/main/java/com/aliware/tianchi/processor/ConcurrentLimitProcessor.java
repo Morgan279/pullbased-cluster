@@ -40,13 +40,14 @@ public class ConcurrentLimitProcessor {
 
     public volatile double computingRateEstimated;
 
-    public volatile double lastComputingRateEstimated;
-
     public ConcurrentLinkedQueue<Boolean> funnel;
 
     //private final ScheduledExecutorService funnelScheduler = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("funnel-timer", true));
 
     private final AtomicInteger roundCounter;
+
+
+    private volatile int lastComputed;
 
     private volatile boolean congestion;
 
@@ -54,7 +55,7 @@ public class ConcurrentLimitProcessor {
 
     public ConcurrentLimitProcessor(int threads) {
         this.threads = threads;
-        this.status = ConcurrentLimitStatus.FILL_UP;
+        this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
         this.RTPropEstimated = threads / 1000D;
@@ -83,13 +84,17 @@ public class ConcurrentLimitProcessor {
     }
 
     public int getInflightBound() {
-        return (int) Math.min(gain * Math.pow(computingRateEstimated  + 1, 2.2D), threads * 0.6D);
+        return (int) Math.min(gain * Math.pow(computingRateEstimated, 1.2D), threads * 0.6D);
     }
 
+    public int getInflightBound(int concurrency) {
+        //logger.info("factor: {}", Math.pow(threads / (concurrency + 1D), 0.05D));
+        return (int) Math.min(gain * computingRateEstimated * Math.pow(threads / (concurrency + 1D), 0.04D), threads * 0.6D);
+        //return (int) Math.min(gain * computingRateEstimated, threads * 0.6D);
+    }
 
     public void onACK(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
-        lastComputingRateEstimated = computingRate;
         switch (status) {
             case PROBE:
                 this.handleProbe(RTT, computingRate);
@@ -162,7 +167,7 @@ public class ConcurrentLimitProcessor {
 
     public void initSchedule() {
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
-        scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
+        //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
 //            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
@@ -171,8 +176,8 @@ public class ConcurrentLimitProcessor {
         }, 1000, 500, TimeUnit.MICROSECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
-            computingRateEstimated = lastComputingRateEstimated;
             RTPropEstimated = lastRTPropEstimated;
+            computingRateEstimated = 0;
 //            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
 //                computingRateEstimated = lastComputingRateEstimated;
 //                RTPropEstimated = lastRTPropEstimated;

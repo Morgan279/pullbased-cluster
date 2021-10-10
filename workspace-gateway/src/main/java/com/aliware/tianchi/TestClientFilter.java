@@ -9,8 +9,6 @@ import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletionException;
-
 /**
  * 客户端过滤器（选址后）
  * 可选接口
@@ -60,22 +58,20 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//        LOGGER.info("{}'s concurrency: {}",invoker.getUrl().getPort(),appResponse.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-        LOGGER.info("{}'s concurrency ratio: {}",invoker.getUrl().getPort(),virtualProvider.getConcurrencyRatio());
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
 //        if (t.getMessage() != null && t.getMessage().contains("thread pool is exhausted")) {
-//            logger.warn("exhausted");
-//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-//            virtualProvider.switchDrain();
+//            LOGGER.warn("exhausted");
+////            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+////            virtualProvider.switchDrain();
 //        }
 
 //        LOGGER.info("t class: {}", t.getClass());
-        if (t.getClass().equals(CompletionException.class)) {
-            LOGGER.error("TestClientFilter onError: {}", t.getMessage());
-        }
+//        if (t.getClass().equals(CompletionException.class)) {
+//            LOGGER.error("TestClientFilter onError: {}", t.getMessage());
+//        }
     }
 }
