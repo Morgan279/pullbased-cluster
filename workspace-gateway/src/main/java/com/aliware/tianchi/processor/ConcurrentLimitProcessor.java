@@ -179,7 +179,7 @@ public class ConcurrentLimitProcessor {
 //            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
 //                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
 //            }
-        }, 1000, 2, TimeUnit.MILLISECONDS);
+        }, 1000, 3, TimeUnit.MILLISECONDS);
 
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             RTPropEstimated = lastRTPropEstimated;
@@ -188,7 +188,7 @@ public class ConcurrentLimitProcessor {
 //                computingRateEstimated = lastComputingRateEstimated;
 //                RTPropEstimated = lastRTPropEstimated;
 //            }
-        }, 1000, 8, TimeUnit.MILLISECONDS);
+        }, 1000, 24, TimeUnit.MILLISECONDS);
 
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
 //            if (congestion) {
