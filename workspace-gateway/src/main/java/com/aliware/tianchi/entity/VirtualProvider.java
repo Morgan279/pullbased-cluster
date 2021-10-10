@@ -17,7 +17,7 @@ public class VirtualProvider {
 
     public final int threads;
 
-    public volatile long averageRTT;
+    public volatile double averageRTT;
 
     public final AtomicInteger computed;
 
@@ -39,7 +39,7 @@ public class VirtualProvider {
 
     private int counter;
 
-    private long sum;
+    private double sum;
 
     private volatile long lastSamplingTime = System.currentTimeMillis();
 
@@ -67,7 +67,11 @@ public class VirtualProvider {
         //scheduledExecutorService = Executors.newScheduledThreadPool(threads / 3, new NamedInternalThreadFactory("concurrent-timer", true));
     }
 
-    public double getConcurrencyRatio(){
+    public double getPredict() {
+        return averageRTT * Math.exp(concurrency / averageRTT);
+    }
+
+    public double getConcurrencyRatio() {
         return (double) concurrency / threads;
     }
 
@@ -78,7 +82,7 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
+        //LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
         // return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
         return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
     }
@@ -102,7 +106,8 @@ public class VirtualProvider {
 //        LOGGER.info("avg: {}", averageRTT);
         this.concurrentLimitProcessor.onACK(RTT, computingRate);
         //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
-        //this.recordLatency(latency / (int) 1e6);
+        this.recordLatency(RTT);
+        //LOGGER.info("avg: {} {}", averageRTT, getPredict());
     }
 
     public void refreshErrorSampling() {
@@ -114,12 +119,15 @@ public class VirtualProvider {
         }
     }
 
-    private synchronized void recordLatency(long latency) {
+    private synchronized void recordLatency(double latency) {
         counter = (counter + 1) % 10;
         if (counter == 9) {
-            recentMaxLatency = latency;
+            recentMaxLatency = (long) latency;
+            averageRTT = sum / 10D;
+            sum = 0;
         } else {
-            recentMaxLatency = Math.max(recentMaxLatency, latency);
+            sum += latency;
+            recentMaxLatency = Math.max(recentMaxLatency, (long) latency);
         }
 //        sum += latency;
 //        ++counter;
