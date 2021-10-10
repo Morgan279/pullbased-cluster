@@ -16,9 +16,13 @@ public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listen
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        RpcInvocation inv = (RpcInvocation) invocation;
-        inv.setInvokeMode(InvokeMode.FUTURE);
-        return invoker.invoke(inv);
+//        try {
+//            return invoker.invoke(invocation);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+        return invoker.invoke(invocation);
     }
 
     @Override

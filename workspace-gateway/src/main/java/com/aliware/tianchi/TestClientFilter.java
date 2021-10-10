@@ -24,27 +24,39 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+//        if (virtualProvider.concurrentLimitProcessor.isDraining()) {
+//            throw new RpcException();
+//        }
 
         virtualProvider.waiting.incrementAndGet();
-        while (virtualProvider.isConcurrentLimited()) {
-            Thread.yield();
-        }
+        virtualProvider.isConcurrentLimited();
+//        while (virtualProvider.isConcurrentLimited()) {
+//            Thread.yield();
+//        }
+//        if (virtualProvider.getConcurrencyRatio() > 0.6) {
+//            virtualProvider.switchDrain();
+//            throw new RpcException();
+//        }
+
         virtualProvider.inflight.incrementAndGet();
         virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
+        invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound(virtualProvider.concurrency)));
+
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
 //            virtualProvider.refreshErrorSampling();
 //            virtualProvider.assigned.incrementAndGet();
+//            virtualProvider.inflight.decrementAndGet();
             virtualProvider.inflight.decrementAndGet();
-            virtualProvider.computed.incrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
 //            logger.info("RTT: {}", latency / 1e6);
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
+                virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             }
 //            else {

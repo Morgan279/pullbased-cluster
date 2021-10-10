@@ -1,7 +1,6 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
-import com.aliware.tianchi.processor.TimeoutProcessor;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
@@ -22,13 +21,13 @@ import java.util.List;
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
-    private final TimeoutProcessor<T> timeoutProcessor;
+    //private final TimeoutProcessor<T> timeoutProcessor;
     private final static Logger LOGGER = LoggerFactory.getLogger(UserClusterInvoker.class);
 
 
     public UserClusterInvoker(Directory<T> directory) {
         super(directory);
-        this.timeoutProcessor = new TimeoutProcessor<>();
+        //this.timeoutProcessor = new TimeoutProcessor<>();
         for (Invoker<T> invoker : directory.getAllInvokers()) {
             Supervisor.registerProvider(invoker);
         }

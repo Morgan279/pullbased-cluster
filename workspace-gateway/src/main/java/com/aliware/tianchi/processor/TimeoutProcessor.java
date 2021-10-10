@@ -1,7 +1,6 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.entity.FutureFlow;
-import com.aliware.tianchi.entity.Supervisor;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -28,14 +27,23 @@ public class TimeoutProcessor<T> implements Runnable {
     public void run() {
         FutureFlow<T> futureFlow;
         while (true) {
-            if ((futureFlow = futureFlowQueue.poll()) != null && !futureFlow.isDone()) {
-                if (futureFlow.getRetentionTime() > Supervisor.getLatencyThreshold()) {
-                    futureFlow.forceTimeout();
-                    //virtualProvider.inflight.decrementAndGet();
+            if ((futureFlow = futureFlowQueue.poll()) != null) {
+                if (futureFlow.isDone()) {
+                    if (futureFlow.isTimeout()) {
+                        System.out.println("xxxxxxxxxxxxxxxxxxxxxxxx");
+                    }
                 } else {
                     futureFlowQueue.add(futureFlow);
                 }
             }
+//            if ((futureFlow = futureFlowQueue.poll()) != null && !futureFlow.isDone()) {
+//                if (futureFlow.getRetentionTime() > Supervisor.getLatencyThreshold()) {
+//                    futureFlow.forceTimeout();
+//                    //virtualProvider.inflight.decrementAndGet();
+//                } else {
+//                    futureFlowQueue.add(futureFlow);
+//                }
+//            }
         }
     }
 }

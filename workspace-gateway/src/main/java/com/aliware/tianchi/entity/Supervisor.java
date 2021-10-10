@@ -1,6 +1,7 @@
 package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.processor.RoundRobinProcessor;
+import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.rpc.Invoker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ public class Supervisor {
 
     public static <T> void registerProvider(Invoker<T> invoker) {
         int port = invoker.getUrl().getPort();
-        int threads = Integer.parseInt(invoker.getUrl().getParameter("threads", "200"));
+        int threads = Integer.parseInt(invoker.getUrl().getParameter(CommonConstants.THREADS_KEY, String.valueOf(CommonConstants.DEFAULT_THREADS)));
         virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         RoundRobinProcessor.register(port);
         LOGGER.info("register provider, port: " + port + " thread:" + threads);

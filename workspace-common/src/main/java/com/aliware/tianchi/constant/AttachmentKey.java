@@ -14,6 +14,6 @@ public abstract class AttachmentKey {
 
     public static final String EXECUTE_ELAPSE = "execute_elapse";
 
-    public static final String LAST_COMPUTED = "last_computed";
+    public static final String CONCURRENT_BOUND = "concurrent_bound";
 
 }

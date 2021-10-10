@@ -78,7 +78,8 @@ public class VirtualProvider {
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        //LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
+        LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
+        // return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
         return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
     }
 
@@ -100,7 +101,7 @@ public class VirtualProvider {
         double computingRate = (computed.get() - lastComputed) / RTT;
 //        LOGGER.info("avg: {}", averageRTT);
         this.concurrentLimitProcessor.onACK(RTT, computingRate);
-        LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
+        //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
         //this.recordLatency(latency / (int) 1e6);
     }
 

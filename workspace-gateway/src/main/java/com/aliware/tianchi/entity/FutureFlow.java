@@ -1,6 +1,8 @@
 package com.aliware.tianchi.entity;
 
 
+import org.apache.dubbo.rpc.RpcException;
+
 import java.util.concurrent.Future;
 
 public class FutureFlow<T> {
@@ -22,6 +24,15 @@ public class FutureFlow<T> {
 
     public boolean isDone() {
         return future.isDone();
+    }
+
+    public boolean isTimeout() {
+        try {
+            return future.get() == null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        throw new RpcException("bad status");
     }
 
     public void forceTimeout() {

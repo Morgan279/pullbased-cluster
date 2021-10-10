@@ -24,17 +24,21 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
+        if (concurrency.get() > bound) {
+            throw new RpcException();
+        }
         concurrency.incrementAndGet();
         return invoker.invoke(invocation);
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        appResponse.setAttachment(AttachmentKey.CONCURRENT,String.valueOf(concurrency.decrementAndGet()));
+        appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-
+        
     }
 }
