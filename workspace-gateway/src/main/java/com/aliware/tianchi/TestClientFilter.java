@@ -46,6 +46,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int lastComputed = virtualProvider.computed.get();
 
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
+//        RpcContext.getClientAttachment().setObjectAttachment("timeout-countdown", TimeoutCountDown.newCountDown(virtualProvider.getLatencyThreshold(), TimeUnit.MILLISECONDS));
+
+        //invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound(virtualProvider.concurrency)));
 
         long startTime = System.nanoTime();

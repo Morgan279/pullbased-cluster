@@ -29,6 +29,8 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
             throw new RpcException();
         }
         concurrency.incrementAndGet();
+        //long timeout = Long.parseLong(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD));
+        //RpcContext.getClientAttachment().setObjectAttachment("timeout-countdown", TimeoutCountDown.newCountDown(timeout * 2, TimeUnit.MILLISECONDS));
         return invoker.invoke(invocation);
     }
 
@@ -41,6 +43,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-
+        //concurrency.decrementAndGet();
     }
 }

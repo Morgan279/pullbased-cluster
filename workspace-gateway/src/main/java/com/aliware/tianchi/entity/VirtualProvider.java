@@ -2,7 +2,6 @@ package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
-import io.netty.util.internal.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,8 +84,10 @@ public class VirtualProvider {
     }
 
     public long getLatencyThreshold() {
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()));
-        //return (long) (Math.max(Math.sqrt(getPredict()) * ThreadLocalRandom.current().nextDouble(0.9, 1.1), 1));
+        //return 2000;
+        return (long) (Math.pow(5000, 1D / concurrency) > 1.4 ? Math.pow(1.4, concurrency) * Math.sqrt(concurrency) : 5000 * (1.4 - Math.pow(5000, 1D / concurrency)));
+        //return (long) (Math.min(Math.max(concurrentLimitProcessor.RTPropEstimated, 1), 500) * ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()));
+        //return (long) (Math.max(Math.sqrt(getPredict()) * ThreadLocalRandom.current().nextDouble(0.4, 0.6), 1));
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
     }
@@ -135,9 +136,9 @@ public class VirtualProvider {
 
     private synchronized void recordLatency(double latency) {
         ++counter;
-        if (counter == 100) {
+        if (counter == 10) {
             recentMaxLatency = (long) latency;
-            averageRTT = sum / 100D;
+            averageRTT = sum / 10D;
             sum = counter = 0;
         } else {
             sum += latency;

@@ -55,7 +55,7 @@ public class UserLoadBalance implements LoadBalance {
 //                return selected;
 //            }
 //        }
-//        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+        //       return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
         return selectMinWaitingInvoker(invokers);
     }
 
