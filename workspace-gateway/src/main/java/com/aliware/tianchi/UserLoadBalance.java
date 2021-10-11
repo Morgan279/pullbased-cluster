@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,6 +27,13 @@ public class UserLoadBalance implements LoadBalance {
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
+//        for (Invoker<T> invoker : invokers) {
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            if (virtualProvider.privilege.get() > 0) {
+//                virtualProvider.privilege.decrementAndGet();
+//                return invoker;
+//            }
+//        }
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
 //        WorkLoad workLoad;
 //
@@ -41,11 +47,11 @@ public class UserLoadBalance implements LoadBalance {
 //        }
 //        throw new RpcException("no available provider");
 //        while (true) {
-//            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-////            Invoker<T> selected = selectMinWaitingInvoker(invokers);
+////            Invoker<T> selected = invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//            Invoker<T> selected = selectMinWaitingInvoker(invokers);
 //            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(selected.getUrl().getPort());
 //            // LOGGER.info("error ratio: {}", virtualProvider.getErrorRatio());
-//            if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+//            if (ThreadLocalRandom.current().nextDouble() > Math.sqrt(virtualProvider.getErrorRatio())) {
 //                return selected;
 //            }
 //        }
@@ -54,18 +60,44 @@ public class UserLoadBalance implements LoadBalance {
     }
 
     private <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
-        double selectedWeight = Double.MIN_VALUE;
+        double selectedWeight = Double.MAX_VALUE;
         Invoker<T> selectedInvoker = null;
-        StringBuilder stringBuilder = new StringBuilder();
+//        double sumWeight = 0;
+//        StringBuilder stringBuilder = new StringBuilder();
+//        Map<Integer, Integer> weightMap = new HashMap<>(invokers.size());
         for (Invoker<T> invoker : invokers) {
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            stringBuilder.append(virtualProvider.getWeight()).append(" ");
-            if (virtualProvider.getWeight() > selectedWeight) {
-                selectedWeight = virtualProvider.getWeight();
+            //weightMap.put(virtualProvider.getPort(), virtualProvider.waiting.get());
+//            if (virtualProvider.privilege.get() > 0) {
+//                virtualProvider.privilege.decrementAndGet();
+//                return invoker;
+//            }
+            //sumWeight += virtualProvider.waiting.get();
+//            stringBuilder.append(virtualProvider.waiting.get()).append(" ");
+            if (virtualProvider.waiting.get() < selectedWeight) {
+                selectedWeight = virtualProvider.waiting.get();
                 selectedInvoker = invoker;
             }
         }
-        LOGGER.info("weights: {}",stringBuilder.toString());
+//        for (Invoker<T> invoker : invokers) {
+//            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//            weightMap.put(virtualProvider.getPort(), (int) (sumWeight / virtualProvider.waiting.get()));
+//        }
+//        LOGGER.info("weights: {}", stringBuilder.toString());
+//        int selectPort = RoundRobinProcessor.select(weightMap);
+//        for (Invoker<T> invoker : invokers) {
+//            if (invoker.getUrl().getPort() == selectPort) {
+//                return invoker;
+//            }
+//        }
+//        while (true) {
+//            for (Invoker<T> invoker : invokers) {
+//                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+//                if (ThreadLocalRandom.current().nextDouble() < virtualProvider.getWeight() / sumWeight) {
+//                    return invoker;
+//                }
+//            }
+//        }
         return selectedInvoker;
     }
 

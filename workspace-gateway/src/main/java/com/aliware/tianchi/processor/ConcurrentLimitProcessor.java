@@ -22,7 +22,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.1, 0.9, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -61,7 +61,7 @@ public class ConcurrentLimitProcessor {
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
-        this.RTPropEstimated = threads / 1000D;
+        this.RTPropEstimated = threads / 500D;
         this.lastRTPropEstimated = RTPropEstimated;
         this.computingRateEstimated = threads;
         this.lastComputingRateEstimated = computingRateEstimated;
@@ -88,7 +88,7 @@ public class ConcurrentLimitProcessor {
     }
 
     public int getInflightBound() {
-        return (int) Math.min(gain * Math.pow(computingRateEstimated, 2D), threads * 0.6D);
+        return (int) (gain * computingRateEstimated * RTPropEstimated);
     }
 
     public int getInflightBound(int concurrency) {

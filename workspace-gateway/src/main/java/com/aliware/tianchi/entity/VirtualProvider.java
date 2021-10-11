@@ -2,11 +2,11 @@ package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
+import io.netty.util.internal.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class VirtualProvider {
@@ -31,6 +31,8 @@ public class VirtualProvider {
 
     public final AtomicInteger waiting;
 
+    public final AtomicInteger privilege = new AtomicInteger(0);
+
     private final int SAMPLING_COUNT;
 
     private final int port;
@@ -47,6 +49,8 @@ public class VirtualProvider {
 
     public volatile int concurrency;
 
+    public volatile int remain = 100;
+
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -57,7 +61,7 @@ public class VirtualProvider {
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.assigned = new AtomicInteger(1);
-        this.error = new AtomicInteger(1);
+        this.error = new AtomicInteger(0);
         this.comingNum = new AtomicInteger(0);
         this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
@@ -75,13 +79,15 @@ public class VirtualProvider {
         return (concurrency + 1D) / threads;
     }
 
-    public double getWeight(){
-        return concurrentLimitProcessor.computingRateEstimated / (getConcurrencyRatio() * (averageRTT / Supervisor.getMaxAvgRTT()) * getErrorRatio());
+    public double getWeight() {
+        return Math.pow(concurrentLimitProcessor.computingRateEstimated, 0.1) / Math.sqrt((getErrorRatio() + averageRTT / Supervisor.getMaxAvgRTT()) * getConcurrencyRatio());
+        //return Math.sqrt((getErrorRatio() + averageRTT / Supervisor.getMaxAvgRTT()) * getConcurrencyRatio());
     }
 
     public long getLatencyThreshold() {
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.2, 1.8));
-        //return (long) (Math.max(getPredict() * ThreadLocalRandom.current().nextDouble(0.9, 1.1), 3));
+        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.2, 2.2 + getConcurrencyRatio() - getErrorRatio()));
+        //return (long) (Math.max(Math.sqrt(getPredict()) * ThreadLocalRandom.current().nextDouble(0.9, 1.1), 1));
+        //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
     }
 
@@ -99,6 +105,9 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+//        if (RTT < 3) {
+//            privilege.incrementAndGet();
+//        }
 //        if (RTT < 5) {
 //            for (int i = 0; i < 3; ++i) {
 //                Supervisor.workLoads.pollLast();
@@ -109,7 +118,7 @@ public class VirtualProvider {
 //        Supervisor.workLoads.add(new WorkLoad(port, RTT));
         double computingRate = (computed.get() - lastComputed) / RTT;
 //        LOGGER.info("avg: {}", averageRTT);
-        this.concurrentLimitProcessor.onACK(RTT, computingRate);
+        this.concurrentLimitProcessor.handleProbe(RTT, computingRate);
         //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
         this.recordLatency(RTT);
         //LOGGER.info("avg: {} {}", averageRTT, getPredict());
@@ -119,16 +128,16 @@ public class VirtualProvider {
         long now = System.currentTimeMillis();
         if (now - lastSamplingTime > 10) {
             assigned.set(1);
-            error.set(1);
+            error.set(0);
             lastSamplingTime = now;
         }
     }
 
     private synchronized void recordLatency(double latency) {
         ++counter;
-        if (counter == 10) {
+        if (counter == 100) {
             recentMaxLatency = (long) latency;
-            averageRTT = sum / 10D;
+            averageRTT = sum / 100D;
             sum = counter = 0;
         } else {
             sum += latency;

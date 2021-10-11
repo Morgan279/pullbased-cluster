@@ -34,11 +34,13 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
+        //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
+        //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        
+
     }
 }
