@@ -27,38 +27,42 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrency = new AtomicInteger(0);
 
-    private final AtomicInteger computed = new AtomicInteger(0);
-
-    private final AtomicInteger waiting = new AtomicInteger(0);
-
-    private final ConcurrentLimitProcessor clp = new ConcurrentLimitProcessor();
+//    private final AtomicInteger computed = new AtomicInteger(0);
+//
+//    private final AtomicInteger waiting = new AtomicInteger(0);
+//
+//    private final ConcurrentLimitProcessor clp = new ConcurrentLimitProcessor();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-//        int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
-        //LOGGER.info("request elapsed: {}, RT: {}", requestStopWatch.stop(), System.currentTimeMillis() - Long.parseLong(invocation.getAttachment(AttachmentKey.SEND_TIME)));
-        double requestRT = requestStopWatch.stop();
-        waiting.incrementAndGet();
-        if (concurrency.get() > clp.getBound()) {
+        int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
+        if (concurrency.get() > bound) {
             throw new RpcException();
         }
-        requestStopWatch.start();
-        waiting.decrementAndGet();
         concurrency.incrementAndGet();
-        int lastComputed = computed.get();
-        stopWatch.start();
-        Result result = invoker.invoke(invocation);
-        double elapsed = stopWatch.stop();
-        clp.onResponse(requestRT, (computed.incrementAndGet() - lastComputed) / elapsed);
-        return result;
+        return invoker.invoke(invocation);
+        //LOGGER.info("request elapsed: {}, RT: {}", requestStopWatch.stop(), System.currentTimeMillis() - Long.parseLong(invocation.getAttachment(AttachmentKey.SEND_TIME)));
+//        double requestRT = requestStopWatch.stop();
+//        waiting.incrementAndGet();
+//        if (concurrency.get() > clp.getBound()) {
+//            throw new RpcException();
+//        }
+//        requestStopWatch.start();
+//        waiting.decrementAndGet();
+//        concurrency.incrementAndGet();
+//        int lastComputed = computed.get();
+//        stopWatch.start();
+//        Result result = invoker.invoke(invocation);
+//        double elapsed = stopWatch.stop();
+//        clp.onResponse(requestRT, (computed.incrementAndGet() - lastComputed) / elapsed);
+//        return result;
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
-        appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
-
+        //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
 

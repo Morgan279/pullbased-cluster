@@ -74,7 +74,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-        virtualProvider.remain.set(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
+//        virtualProvider.remain.set(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
     }
 
     @Override

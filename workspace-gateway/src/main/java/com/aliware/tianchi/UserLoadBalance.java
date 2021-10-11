@@ -44,7 +44,7 @@ public class UserLoadBalance implements LoadBalance {
 //                return invoker;
 //            }
 //        }
-//        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
 //        WorkLoad workLoad;
 //
 //        while ((workLoad = Supervisor.workLoads.pollFirst()) == null) {
@@ -65,7 +65,7 @@ public class UserLoadBalance implements LoadBalance {
 //                return selected;
 //            }
 //        }
-        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
+//        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
 //        return selectMinWaitingInvoker(invokers);
     }
 
