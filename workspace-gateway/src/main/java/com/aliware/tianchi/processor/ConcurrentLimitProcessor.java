@@ -22,7 +22,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.2, 0.833, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -189,7 +189,7 @@ public class ConcurrentLimitProcessor {
 //                computingRateEstimated = lastComputingRateEstimated;
 //                RTPropEstimated = lastRTPropEstimated;
 //            }
-        }, 1000, 10, TimeUnit.MILLISECONDS);
+        }, 1000, 7500, TimeUnit.MICROSECONDS);
 
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
 //            if (congestion) {
