@@ -134,7 +134,7 @@ public class VirtualProvider {
         this.concurrentLimitProcessor.handleProbe(RTT, computingRate);
         //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
         //this.recordLatency(RTT);
-        //this.predictor.update(RTT);
+        this.predictor.update(RTT);
         //LOGGER.info("avg: {} {}", averageRTT, getPredict());
     }
 
