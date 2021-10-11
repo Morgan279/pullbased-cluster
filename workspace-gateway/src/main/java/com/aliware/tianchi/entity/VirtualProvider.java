@@ -57,7 +57,7 @@ public class VirtualProvider {
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.assigned = new AtomicInteger(1);
-        this.error = new AtomicInteger(0);
+        this.error = new AtomicInteger(1);
         this.comingNum = new AtomicInteger(0);
         this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
@@ -72,11 +72,15 @@ public class VirtualProvider {
     }
 
     public double getConcurrencyRatio() {
-        return (double) concurrency / threads;
+        return (concurrency + 1D) / threads;
+    }
+
+    public double getWeight(){
+        return concurrentLimitProcessor.computingRateEstimated / (getConcurrencyRatio() * (averageRTT / Supervisor.getMaxAvgRTT()) * getErrorRatio());
     }
 
     public long getLatencyThreshold() {
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.5, 2));
+        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1.2, 1.8));
         //return (long) (Math.max(getPredict() * ThreadLocalRandom.current().nextDouble(0.9, 1.1), 3));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
     }
@@ -90,7 +94,7 @@ public class VirtualProvider {
 
     public double getErrorRatio() {
         //logger.info("assigned: {} error: {} ratio: {}", assigned.get(), error.get(), (double) error.get() / assigned.get() / 3);
-        return Math.pow(error.get() * 100D / assigned.get(), 0.8D) / 100;
+        return (double) error.get() / assigned.get();
     }
 
     public void onComputed(long latency, int lastComputed) {
@@ -113,9 +117,9 @@ public class VirtualProvider {
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 100 * concurrentLimitProcessor.RTPropEstimated) {
+        if (now - lastSamplingTime > 10) {
             assigned.set(1);
-            error.set(0);
+            error.set(1);
             lastSamplingTime = now;
         }
     }

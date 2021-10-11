@@ -3,6 +3,7 @@ package com.aliware.tianchi;
 import com.aliware.tianchi.constant.AttachmentKey;
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
+import com.aliware.tianchi.entity.WorkLoad;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -28,7 +29,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            throw new RpcException();
 //        }
 
-        virtualProvider.waiting.incrementAndGet();
+//        virtualProvider.waiting.incrementAndGet();
         virtualProvider.isConcurrentLimited();
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
@@ -39,7 +40,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        }
 
         virtualProvider.inflight.incrementAndGet();
-        virtualProvider.waiting.decrementAndGet();
+//        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
         RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
@@ -47,9 +48,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-//            virtualProvider.refreshErrorSampling();
-//            virtualProvider.assigned.incrementAndGet();
-//            virtualProvider.inflight.decrementAndGet();
+            virtualProvider.refreshErrorSampling();
+            virtualProvider.assigned.incrementAndGet();
             virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
@@ -58,11 +58,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 long latency = System.nanoTime() - startTime;
                 virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
+            } else {
+                virtualProvider.error.incrementAndGet();
             }
-//            else {
-//                //virtualProvider.error.incrementAndGet();
-//                Supervisor.workLoads.add(new WorkLoad(port, 5000 * ThreadLocalRandom.current().nextDouble()));
-//            }
         });
 
     }

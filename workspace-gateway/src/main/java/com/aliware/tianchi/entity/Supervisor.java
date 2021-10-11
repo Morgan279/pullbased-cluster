@@ -37,4 +37,12 @@ public class Supervisor {
         }
         return Math.max(threshold, 20);
     }
+
+    public static double getMaxAvgRTT() {
+        double maxAvg = 0;
+        for (VirtualProvider virtualProvider : virtualProviderMap.values()) {
+            maxAvg = Math.max(maxAvg, virtualProvider.averageRTT);
+        }
+        return maxAvg;
+    }
 }

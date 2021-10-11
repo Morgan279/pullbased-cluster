@@ -54,16 +54,19 @@ public class UserLoadBalance implements LoadBalance {
     }
 
     private <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
-        double minWaiting = Double.MAX_VALUE;
-        Invoker<T> minWaitingInvoker = null;
+        double selectedWeight = Double.MIN_VALUE;
+        Invoker<T> selectedInvoker = null;
+        StringBuilder stringBuilder = new StringBuilder();
         for (Invoker<T> invoker : invokers) {
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            if (virtualProvider.averageRTT < minWaiting) {
-                minWaiting = virtualProvider.averageRTT;
-                minWaitingInvoker = invoker;
+            stringBuilder.append(virtualProvider.getWeight()).append(" ");
+            if (virtualProvider.getWeight() > selectedWeight) {
+                selectedWeight = virtualProvider.getWeight();
+                selectedInvoker = invoker;
             }
         }
-        return minWaitingInvoker;
+        LOGGER.info("weights: {}",stringBuilder.toString());
+        return selectedInvoker;
     }
 
 }
