@@ -1,6 +1,7 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.constant.AttachmentKey;
+import com.aliware.tianchi.tool.StopWatch;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -20,24 +21,44 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
 
+    private final StopWatch stopWatch = new StopWatch();
+
+    private final StopWatch requestStopWatch = new StopWatch();
+
     private final AtomicInteger concurrency = new AtomicInteger(0);
+
+    private final AtomicInteger computed = new AtomicInteger(0);
+
+    private final AtomicInteger waiting = new AtomicInteger(0);
+
+    private final ConcurrentLimitProcessor clp = new ConcurrentLimitProcessor();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
-        if (concurrency.get() > bound) {
+//        int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
+        //LOGGER.info("request elapsed: {}, RT: {}", requestStopWatch.stop(), System.currentTimeMillis() - Long.parseLong(invocation.getAttachment(AttachmentKey.SEND_TIME)));
+        double requestRT = requestStopWatch.stop();
+        waiting.incrementAndGet();
+        if (concurrency.get() > clp.getBound()) {
             throw new RpcException();
         }
+        requestStopWatch.start();
+        waiting.decrementAndGet();
         concurrency.incrementAndGet();
-        //long timeout = Long.parseLong(invocation.getAttachment(AttachmentKey.LATENCY_THRESHOLD));
-        //RpcContext.getClientAttachment().setObjectAttachment("timeout-countdown", TimeoutCountDown.newCountDown(timeout * 2, TimeUnit.MILLISECONDS));
-        return invoker.invoke(invocation);
+        int lastComputed = computed.get();
+        stopWatch.start();
+        Result result = invoker.invoke(invocation);
+        double elapsed = stopWatch.stop();
+        clp.onResponse(requestRT, (computed.incrementAndGet() - lastComputed) / elapsed);
+        return result;
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
+        appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
+
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
 

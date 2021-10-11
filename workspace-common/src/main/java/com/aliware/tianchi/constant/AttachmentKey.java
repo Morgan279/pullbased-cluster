@@ -16,4 +16,6 @@ public abstract class AttachmentKey {
 
     public static final String CONCURRENT_BOUND = "concurrent_bound";
 
+    public static final String SEND_TIME = "send_time";
+
 }

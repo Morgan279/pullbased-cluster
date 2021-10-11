@@ -41,8 +41,14 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 //        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, Supervisor.getLatencyThreshold());
         return loadbalance.select(invokers, getUrl(), invocation).invoke(invocation);
 //        Invoker<T> selectedInvoker = loadbalance.select(invokers, getUrl(), invocation);
-//        Result result = selectedInvoker.invoke(invocation);
-//        timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture());
-//        return result;
+//        try {
+//            return selectedInvoker.invoke(invocation);
+//        } catch (Throwable e) {
+//            LOGGER.error("timeout xxx");
+//            e.printStackTrace();
+//        }
+//        return null;
+        //       timeoutProcessor.addFuture(RpcContext.getClientAttachment().getFuture());
+
     }
 }

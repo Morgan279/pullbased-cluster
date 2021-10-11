@@ -50,7 +50,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         //invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
         invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound(virtualProvider.concurrency)));
-
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.refreshErrorSampling();
@@ -75,7 +74,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-        //virtualProvider.remain = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD));
+        virtualProvider.remain.set(Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)));
     }
 
     @Override
