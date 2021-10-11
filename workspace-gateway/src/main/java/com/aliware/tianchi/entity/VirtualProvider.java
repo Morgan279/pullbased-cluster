@@ -90,11 +90,11 @@ public class VirtualProvider {
     public long getLatencyThreshold() {
         //return 2000;
         //return (long) (Math.pow(5000, 1D / concurrency) > 1.4 ? Math.pow(1.4, concurrency) * Math.sqrt(concurrency) : 5000 * (1.4 - Math.pow(5000, 1D / concurrency)));
-        return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()));
+        //return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()));
         //return (long) (Math.max(Math.sqrt(getPredict()) * ThreadLocalRandom.current().nextDouble(0.4, 0.6), 1));
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
-        //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
     }
 
@@ -116,8 +116,8 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-//        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
-//        esRtt = 0.875 * esRtt + 0.125 * RTT;
+        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
+        esRtt = 0.875 * esRtt + 0.125 * RTT;
 //        LOGGER.info("es: {} act:{} predic: {}", esRtt, RTT, predictor.getPrediction());
 //        if (RTT < 3) {
 //            privilege.incrementAndGet();
