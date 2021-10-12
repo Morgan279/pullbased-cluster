@@ -40,6 +40,7 @@ private final AtomicInteger waiting = new AtomicInteger(0);
         if (concurrency.get() > bound) {
             throw new RpcException();
         }
+        waiting.decrementAndGet();
         concurrency.incrementAndGet();
         return invoker.invoke(invocation);
         //LOGGER.info("request elapsed: {}, RT: {}", requestStopWatch.stop(), System.currentTimeMillis() - Long.parseLong(invocation.getAttachment(AttachmentKey.SEND_TIME)));
