@@ -37,9 +37,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            virtualProvider.switchDrain();
 //            throw new RpcException();
 //        }
-        if (virtualProvider.isConcurrentLimited()) {
-            virtualProvider.waiting.incrementAndGet();
-        }
+//        if (virtualProvider.isConcurrentLimited()) {
+//            virtualProvider.waiting.incrementAndGet();
+//        }
 
         virtualProvider.inflight.incrementAndGet();
 //        virtualProvider.waiting.decrementAndGet();
@@ -65,7 +65,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             } else {
                 virtualProvider.error.incrementAndGet();
             }
-            virtualProvider.waiting.set(0);
+            //virtualProvider.waiting.set(0);
         });
 
     }
@@ -74,7 +74,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-        virtualProvider.remain = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)) + 1;
+//        virtualProvider.remain = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)) + 1;
+        virtualProvider.weight = Integer.parseInt(appResponse.getAttachment(AttachmentKey.EVALUATE_WEIGHT));
     }
 
     @Override

@@ -18,4 +18,6 @@ public abstract class AttachmentKey {
 
     public static final String SEND_TIME = "send_time";
 
+    public static final String EVALUATE_WEIGHT = "evaluate_weight";
+
 }

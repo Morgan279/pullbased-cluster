@@ -2,6 +2,7 @@ package com.aliware.tianchi;
 
 import com.aliware.tianchi.entity.Supervisor;
 import com.aliware.tianchi.entity.VirtualProvider;
+import com.aliware.tianchi.processor.RoundRobinProcessor;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
@@ -66,13 +67,14 @@ public class UserLoadBalance implements LoadBalance {
 //            }
 //        }
 //        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-        return selectMinWaitingInvoker(invokers);
+        return RoundRobinProcessor.selectMaxWeight(invokers);
+//        return selectMinWaitingInvoker(invokers);
     }
 
     private <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
 //        double selectedWeight = Double.MAX_VALUE;
 //        Invoker<T> selectedInvoker = invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-        StringBuilder stringBuilder = new StringBuilder();
+
         int sumWeight = 0;
 
 //        Map<Integer, Integer> weightMap = new HashMap<>(invokers.size());
@@ -82,13 +84,12 @@ public class UserLoadBalance implements LoadBalance {
             Invoker<T> invoker = invokers.get(i);
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             sumWeight += virtualProvider.remain;
-            stringBuilder.append(virtualProvider.remain).append(" ");
             if (i > 0 && sameWeight && virtualProvider.remain != lastWeight) {
                 sameWeight = false;
             }
             lastWeight = virtualProvider.remain;
         }
-        LOGGER.info("weights: {}", stringBuilder.toString());
+
 //        int selectPort = RoundRobinProcessor.select(weightMap);
 //        for (Invoker<T> invoker : invokers) {
 //            if (invoker.getUrl().getPort() == selectPort) {
@@ -97,10 +98,25 @@ public class UserLoadBalance implements LoadBalance {
 //        }
 
         if (sumWeight > 3 && !sameWeight) {
-            int offset = ThreadLocalRandom.current().nextInt(sumWeight << 1);
+            StringBuilder stringBuilder = new StringBuilder();
+            int originSumWeight = sumWeight;
             for (Invoker<T> invoker : invokers) {
                 VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-                offset -= sumWeight - virtualProvider.remain;
+                int weight = sumWeight - virtualProvider.remain;
+//                if (virtualProvider.concurrentLimitProcessor.getInflightBound() > 0) {
+//                    int newWeight = weight << 1;
+//                    sumWeight += newWeight - weight;
+//                    weight = newWeight;
+//                }
+                virtualProvider.weight = weight;
+                stringBuilder.append(weight).append("|").append(virtualProvider.concurrentLimitProcessor.getInflightBound()).append(" ");
+            }
+            sumWeight += originSumWeight;
+            LOGGER.info("weights: {}", stringBuilder.toString());
+            int offset = ThreadLocalRandom.current().nextInt(sumWeight);
+            for (Invoker<T> invoker : invokers) {
+                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+                offset -= virtualProvider.weight;
                 if (offset < 0) {
                     return invoker;
                 }
