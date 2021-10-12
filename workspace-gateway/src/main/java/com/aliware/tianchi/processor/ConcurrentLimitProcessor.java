@@ -15,13 +15,13 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2, new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.1, 0.99, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
