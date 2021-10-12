@@ -19,6 +19,6 @@ public abstract class Config {
     public static final int RT_TIME_WINDOW = 6;
 
     public static final int COMPUTING_RATE_WINDOW_FACTOR = 6;
-
+    
     public static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
 }

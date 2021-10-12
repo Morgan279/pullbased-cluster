@@ -94,4 +94,30 @@ public class RoundRobinProcessor {
         }
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
+
+    public <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
+        int sumWeight = 0;
+        boolean sameWeight = true;
+        int lastWeight = 0;
+        for (int i = 0, len = invokers.size(); i < len; ++i) {
+            Invoker<T> invoker = invokers.get(i);
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            sumWeight += virtualProvider.waiting;
+            if (i > 0 && sameWeight && virtualProvider.waiting != lastWeight) {
+                sameWeight = false;
+            }
+            lastWeight = virtualProvider.waiting;
+        }
+        if (sumWeight > 3 && !sameWeight) {
+            int offset = ThreadLocalRandom.current().nextInt(sumWeight << 1);
+            for (Invoker<T> invoker : invokers) {
+                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+                offset -= sumWeight - virtualProvider.waiting;
+                if (offset < 0) {
+                    return invoker;
+                }
+            }
+        }
+        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+    }
 }

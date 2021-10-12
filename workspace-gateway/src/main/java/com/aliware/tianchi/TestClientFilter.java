@@ -41,7 +41,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //            virtualProvider.waiting.incrementAndGet();
 //        }
 
-        virtualProvider.inflight.incrementAndGet();
+//        virtualProvider.inflight.incrementAndGet();
 //        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
 
@@ -54,7 +54,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
-            virtualProvider.inflight.decrementAndGet();
+//            virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
 //            logger.info("RTT: {}", latency / 1e6);
@@ -65,7 +65,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             } else {
                 virtualProvider.error.incrementAndGet();
             }
-            //virtualProvider.waiting.set(0);
         });
 
     }
@@ -74,7 +73,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
-//        virtualProvider.remain = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)) + 1;
+        virtualProvider.waiting = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)) + 1;
         virtualProvider.weight = Integer.parseInt(appResponse.getAttachment(AttachmentKey.EVALUATE_WEIGHT));
     }
 

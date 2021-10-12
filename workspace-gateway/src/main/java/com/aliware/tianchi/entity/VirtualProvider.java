@@ -1,6 +1,7 @@
 package com.aliware.tianchi.entity;
 
 import com.aliware.tianchi.constant.Config;
+import com.aliware.tianchi.constant.Factors;
 import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.slf4j.Logger;
@@ -17,7 +18,11 @@ public class VirtualProvider {
 
     public final int threads;
 
-    public volatile double averageRTT;
+    private final int SAMPLING_COUNT = Config.SAMPLING_COUNT;
+
+    public volatile double averageRTT = Config.INITIAL_AVERAGE_RTT;
+
+    public volatile int weight = Factors.EVALUATE_FACTOR;
 
     public final AtomicInteger computed;
 
@@ -27,13 +32,7 @@ public class VirtualProvider {
 
     public final AtomicInteger error;
 
-    public final AtomicInteger comingNum;
-
-    public final AtomicInteger waiting;
-
     public final AtomicInteger privilege = new AtomicInteger(0);
-
-    private final int SAMPLING_COUNT;
 
     private final int port;
 
@@ -47,11 +46,9 @@ public class VirtualProvider {
 
     public long recentMaxLatency = 0;
 
+    public volatile int waiting = 1;
+
     public volatile int concurrency;
-
-    public volatile int remain;
-
-    public volatile int weight = 128;
 
     private final Predictor predictor;
 
@@ -60,15 +57,10 @@ public class VirtualProvider {
         this.threads = threads;
         this.sum = 0;
         this.counter = 0;
-        this.remain = 1;
-        this.SAMPLING_COUNT = Config.SAMPLING_COUNT;
-        this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
         this.inflight = new AtomicInteger(0);
         this.assigned = new AtomicInteger(1);
         this.error = new AtomicInteger(0);
-        this.comingNum = new AtomicInteger(0);
-        this.waiting = new AtomicInteger(0);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         this.predictor = new Predictor();
 //        for (int i = 0, len = (int) (threads * 0.8); i < len; ++i) {
@@ -97,7 +89,7 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(Math.max(predictor.getPrediction(), 1.5) * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
     }
 
     public boolean isConcurrentLimited() {
@@ -153,12 +145,12 @@ public class VirtualProvider {
     private synchronized void recordLatency(double latency) {
         ++counter;
         if (counter == 10) {
-            recentMaxLatency = (long) latency;
+            // recentMaxLatency = (long) latency;
             averageRTT = sum / 10D;
             sum = counter = 0;
         } else {
             sum += latency;
-            recentMaxLatency = Math.max(recentMaxLatency, (long) latency);
+            //recentMaxLatency = Math.max(recentMaxLatency, (long) latency);
         }
 //        sum += latency;
 //        ++counter;

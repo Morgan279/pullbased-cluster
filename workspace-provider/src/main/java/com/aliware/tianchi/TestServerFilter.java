@@ -1,6 +1,7 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.constant.AttachmentKey;
+import com.aliware.tianchi.constant.Factors;
 import com.aliware.tianchi.tool.StopWatch;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
@@ -40,11 +41,11 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
-//        waiting.incrementAndGet();
+        waiting.incrementAndGet();
         if (concurrency.get() > bound) {
             throw new RpcException();
         }
-//        waiting.decrementAndGet();
+        waiting.decrementAndGet();
         concurrency.incrementAndGet();
         int lastComputed = computed.get();
         stopWatch.start();
@@ -61,9 +62,9 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
-        //     appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
-        appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * 128D)));
-        //   waiting.set(0);
+        appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
+        appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
+        waiting.set(0);
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
 
