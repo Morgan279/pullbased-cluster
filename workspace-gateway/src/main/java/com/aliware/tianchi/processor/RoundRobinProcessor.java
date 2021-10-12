@@ -95,7 +95,7 @@ public class RoundRobinProcessor {
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
-    public <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
+    public static <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
         int sumWeight = 0;
         boolean sameWeight = true;
         int lastWeight = 0;

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
-
+    
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();

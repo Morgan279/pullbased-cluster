@@ -24,10 +24,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     //   private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(300, new NamedInternalThreadFactory("statist", true));
 
-    private final StopWatch stopWatch = new StopWatch();
-
-    private final StopWatch requestStopWatch = new StopWatch();
-
     private final AtomicInteger concurrency = new AtomicInteger(0);
 
     private final AtomicInteger computed = new AtomicInteger(0);
@@ -48,13 +44,13 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         waiting.decrementAndGet();
         concurrency.incrementAndGet();
         int lastComputed = computed.get();
+        StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         Result result = invoker.invoke(invocation);
         double rate = (computed.incrementAndGet() - lastComputed) / stopWatch.stop();
         evaluator.addSample(bound, rate);
         //scheduledExecutorService.execute(() -> evaluator.addSample(bound, rate));
         //LOGGER.info("rate: {} bound: {} rs: {}", rate, bound, evaluator.getEvaluate());
-//        clp.onResponse(requestRT, (computed.incrementAndGet() - lastComputed) / elapsed);
         return result;
     }
 

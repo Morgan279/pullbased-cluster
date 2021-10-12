@@ -64,7 +64,7 @@ public class UserLoadBalance implements LoadBalance {
 //            }
 //        }
 //        return invokers.get(ROUND_COUNTER.getAndIncrement() % invokers.size());
-        return RoundRobinProcessor.selectMaxWeight(invokers);
+        return RoundRobinProcessor.selectMinWaitingInvoker(invokers);
 //        return RoundRobinProcessor.selectMinWaitingInvoker(invokers);
     }
 
