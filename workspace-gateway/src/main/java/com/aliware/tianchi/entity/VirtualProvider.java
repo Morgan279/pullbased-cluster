@@ -49,7 +49,7 @@ public class VirtualProvider {
 
     public volatile int concurrency;
 
-    public final AtomicInteger remain;
+    public volatile int remain;
 
     private final Predictor predictor;
 
@@ -58,6 +58,7 @@ public class VirtualProvider {
         this.threads = threads;
         this.sum = 0;
         this.counter = 0;
+        this.remain = 1;
         this.SAMPLING_COUNT = Config.SAMPLING_COUNT;
         this.averageRTT = Config.INITIAL_AVERAGE_RTT;
         this.computed = new AtomicInteger(0);
@@ -66,7 +67,6 @@ public class VirtualProvider {
         this.error = new AtomicInteger(0);
         this.comingNum = new AtomicInteger(0);
         this.waiting = new AtomicInteger(0);
-        this.remain = new AtomicInteger(100);
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
         this.predictor = new Predictor();
 //        for (int i = 0, len = (int) (threads * 0.8); i < len; ++i) {
