@@ -1,6 +1,8 @@
 package com.aliware.tianchi;
 
 import com.aliware.tianchi.constant.AttachmentKey;
+import com.aliware.tianchi.constant.Factors;
+import com.aliware.tianchi.tool.StopWatch;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
@@ -41,12 +43,12 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         }
         waiting.decrementAndGet();
         concurrency.incrementAndGet();
-        //int lastComputed = computed.get();
-        //StopWatch stopWatch = new StopWatch();
-        //stopWatch.start();
+        int lastComputed = computed.get();
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         Result result = invoker.invoke(invocation);
-        //double rate = (computed.incrementAndGet() - lastComputed) / stopWatch.stop();
-        //evaluator.addSample(bound, rate);
+        double rate = (computed.incrementAndGet() - lastComputed) / stopWatch.stop();
+        evaluator.addSample(bound, rate);
         //scheduledExecutorService.execute(() -> evaluator.addSample(bound, rate));
         //LOGGER.info("rate: {} bound: {} rs: {}", rate, bound, evaluator.getEvaluate());
         return result;
@@ -57,7 +59,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
-        //appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
+        appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
         waiting.set(0);
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
