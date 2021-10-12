@@ -12,7 +12,7 @@ public class Evaluator {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Evaluator.class);
 
-    private static final int N = 32;
+    private static final int N = 64;
 
     private static final double AVG = (N + 1) / 2D;
 

@@ -111,7 +111,7 @@ public class ConcurrentLimitProcessor {
         public void run() {
             RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = lastComputingRateEstimated;
-            scheduledExecutorService.schedule(this, Math.round(6 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            scheduledExecutorService.schedule(this, Math.round(4 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
     }
 

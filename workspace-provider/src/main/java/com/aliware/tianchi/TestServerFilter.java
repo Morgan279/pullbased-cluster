@@ -5,10 +5,13 @@ import com.aliware.tianchi.constant.Factors;
 import com.aliware.tianchi.tool.StopWatch;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
+import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.apache.dubbo.rpc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -22,7 +25,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TestServerFilter.class);
 
-    //   private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(300, new NamedInternalThreadFactory("statist", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(300, new NamedInternalThreadFactory("statist", true));
 
     private final AtomicInteger concurrency = new AtomicInteger(0);
 
@@ -48,8 +51,8 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         stopWatch.start();
         Result result = invoker.invoke(invocation);
         double rate = (computed.incrementAndGet() - lastComputed) / stopWatch.stop();
-        evaluator.addSample(bound, rate);
-        //scheduledExecutorService.execute(() -> evaluator.addSample(bound, rate));
+        //evaluator.addSample(bound, rate);
+        scheduledExecutorService.execute(() -> evaluator.addSample(bound, rate));
         //LOGGER.info("rate: {} bound: {} rs: {}", rate, bound, evaluator.getEvaluate());
         return result;
     }
