@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(UserLoadBalance.class);
-    
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
@@ -74,7 +74,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
         virtualProvider.concurrency = Integer.parseInt(appResponse.getAttachment(AttachmentKey.CONCURRENT));
         virtualProvider.waiting = Integer.parseInt(appResponse.getAttachment(AttachmentKey.REMAIN_THREAD)) + 1;
-        virtualProvider.weight = Integer.parseInt(appResponse.getAttachment(AttachmentKey.EVALUATE_WEIGHT));
+        //virtualProvider.weight = Integer.parseInt(appResponse.getAttachment(AttachmentKey.EVALUATE_WEIGHT));
     }
 
     @Override

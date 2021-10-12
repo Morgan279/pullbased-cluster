@@ -6,7 +6,6 @@ import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +15,7 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4, new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
@@ -41,8 +40,6 @@ public class ConcurrentLimitProcessor {
     public volatile double computingRateEstimated;
 
     private volatile double lastComputingRateEstimated;
-
-    public ConcurrentLinkedQueue<Boolean> funnel;
 
     private final AtomicInteger roundCounter;
 
@@ -77,24 +74,45 @@ public class ConcurrentLimitProcessor {
 
 
     private void initSchedule() {
+        scheduledExecutorService.schedule(new GainUpdater(), 1, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new SampleUpdater(), 1, TimeUnit.MILLISECONDS);
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-//            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-//                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-//            }
-        }, 1000, 1250, TimeUnit.MICROSECONDS);
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
+////            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+////                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
+////            }
+//        }, 1000, 1250, TimeUnit.MICROSECONDS);
 
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            RTPropEstimated = lastRTPropEstimated;
+//            computingRateEstimated = lastComputingRateEstimated;
+////            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
+////                computingRateEstimated = lastComputingRateEstimated;
+////                RTPropEstimated = lastRTPropEstimated;
+////            }
+//        }, 1000, 10, TimeUnit.MILLISECONDS);
+
+    }
+
+    private class GainUpdater implements Runnable {
+
+        @Override
+        public void run() {
+            gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
+            scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+        }
+    }
+
+    private class SampleUpdater implements Runnable {
+
+        @Override
+        public void run() {
             RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = lastComputingRateEstimated;
-//            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-//                computingRateEstimated = lastComputingRateEstimated;
-//                RTPropEstimated = lastRTPropEstimated;
-//            }
-        }, 1000, 10, TimeUnit.MILLISECONDS);
-
+            scheduledExecutorService.schedule(this, Math.round(6 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+        }
     }
 
     public void handleProbe(double RTT, double computingRate) {
