@@ -22,7 +22,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.01, 0.99, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.1, 0.9, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -44,12 +44,8 @@ public class ConcurrentLimitProcessor {
 
     public ConcurrentLinkedQueue<Boolean> funnel;
 
-    //private final ScheduledExecutorService funnelScheduler = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("funnel-timer", true));
-
     private final AtomicInteger roundCounter;
 
-
-    private volatile int lastComputed;
 
     private volatile boolean congestion;
 
@@ -67,35 +63,27 @@ public class ConcurrentLimitProcessor {
         this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        //this.funnel = new ConcurrentLinkedQueue<>();
         this.initSchedule();
     }
 
-    private int getLeakingRate() {
-        return (int) (1000 / gain / computingRateEstimated);
-    }
-
-    private class Leaking implements Runnable {
-
-        @Override
-        public void run() {
-            if (funnel.size() < threads * 100) {
-                funnel.add(true);
-            }
-            //funnelScheduler.schedule(this, getLeakingRate(), TimeUnit.MICROSECONDS);
-            //logger.info("interval: {}", (int) (1000 / gain / computingRateEstimated));
-        }
-    }
 
     public int getInflightBound() {
+        if (ThreadLocalRandom.current().nextDouble() < 0.00024 / lastRTPropEstimated) {
+            RTPropEstimated = lastRTPropEstimated * 1.5;
+            //           System.out.println((int) (gain * computingRateEstimated * RTPropEstimated));
+        }
         return (int) (gain * computingRateEstimated * RTPropEstimated);
     }
 
-    public int getInflightBound(int concurrency) {
-        //logger.info("factor: {}", Math.pow(threads / (concurrency + 1D), 0.05D));
-        return (int) (gain * computingRateEstimated * RTPropEstimated);
-        //return (int) (gain * computingRateEstimated * RTPropEstimated * Math.pow(threads / (concurrency + 1D), 1.5D));
-        //return (int) Math.min(gain * computingRateEstimated, threads * 0.6D);
+
+    public void handleProbe(double RTT, double computingRate) {
+        lastRTPropEstimated = RTT;
+        lastComputingRateEstimated = computingRate;
+        synchronized (UPDATE_LOCK) {
+            RTPropEstimated = Math.min(RTPropEstimated, RTT);
+            computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+        }
+
     }
 
     public void onACK(double RTT, double computingRate) {
@@ -147,15 +135,6 @@ public class ConcurrentLimitProcessor {
         }, 1, TimeUnit.MILLISECONDS);
     }
 
-    public void handleProbe(double RTT, double computingRate) {
-        lastRTPropEstimated = RTT;
-        lastComputingRateEstimated = computingRate;
-        synchronized (UPDATE_LOCK) {
-            RTPropEstimated = Math.min(RTPropEstimated, RTT);
-            computingRateEstimated = Math.max(computingRateEstimated, computingRate);
-        }
-
-    }
 
     private void handleFillUp(double RTT, double computingRate) {
 //        RTPropEstimated = Math.min(RTPropEstimated, RTT);
@@ -191,11 +170,6 @@ public class ConcurrentLimitProcessor {
 //            }
         }, 1000, 10, TimeUnit.MILLISECONDS);
 
-//        scheduledExecutorService.scheduleAtFixedRate(() -> {
-//            if (congestion) {
-//                this.switchDrain();
-//            }
-//        }, Config.CONGESTION_SCAN_INTERVAL * 10, Config.CONGESTION_SCAN_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     public boolean isDraining() {

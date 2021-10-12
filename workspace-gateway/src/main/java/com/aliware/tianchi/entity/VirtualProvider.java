@@ -48,9 +48,10 @@ public class VirtualProvider {
     public long recentMaxLatency = 0;
 
     public volatile int concurrency;
+
     public final AtomicInteger remain;
 
-    private Predictor predictor;
+    private final Predictor predictor;
 
     public VirtualProvider(int port, int threads) {
         this.port = port;
@@ -79,7 +80,7 @@ public class VirtualProvider {
     }
 
     public double getConcurrencyRatio() {
-        return (concurrency + 1D) / threads;
+        return (concurrency + 0D) / threads;
     }
 
     public double getWeight() {
@@ -88,21 +89,20 @@ public class VirtualProvider {
     }
 
     public long getLatencyThreshold() {
-        //return 2000;
         //return (long) (Math.pow(5000, 1D / concurrency) > 1.4 ? Math.pow(1.4, concurrency) * Math.sqrt(concurrency) : 5000 * (1.4 - Math.pow(5000, 1D / concurrency)));
         //return (long) (Math.max(concurrentLimitProcessor.RTPropEstimated, 1) * ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()));
         //return (long) (Math.max(Math.sqrt(getPredict()) * ThreadLocalRandom.current().nextDouble(0.4, 0.6), 1));
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(1.5, 2.5 + getConcurrencyRatio() - getErrorRatio()));
     }
 
     public boolean isConcurrentLimited() {
         //return concurrentLimitProcessor.rateLimiter.tryAcquire();
-        //LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(concurrency), concurrentLimitProcessor.computingRateEstimated, concurrency);
+        //LOGGER.info("inflight: {} bound: {} computing rate: {} concurrency: {}", inflight.get(), concurrentLimitProcessor.getInflightBound(), concurrentLimitProcessor.computingRateEstimated, concurrency);
         // return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
-        return inflight.get() > concurrentLimitProcessor.getInflightBound(concurrency);
+        return inflight.get() > concurrentLimitProcessor.getInflightBound();
     }
 
     public double getErrorRatio() {
@@ -116,6 +116,9 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+        double computingRate = (computed.get() - lastComputed) / RTT;
+        this.concurrentLimitProcessor.handleProbe(RTT, computingRate);
+        this.predictor.update(RTT);
 //        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
 //        esRtt = 0.875 * esRtt + 0.125 * RTT;
 //        LOGGER.info("es: {} act:{} predic: {}", esRtt, RTT, predictor.getPrediction());
@@ -130,11 +133,9 @@ public class VirtualProvider {
 //            //concurrentLimitProcessor.switchFillUp();
 //        }
 //        Supervisor.workLoads.add(new WorkLoad(port, RTT));
-        double computingRate = (computed.get() - lastComputed) / RTT;
-        this.concurrentLimitProcessor.handleProbe(RTT, computingRate);
+
         //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
         //this.recordLatency(RTT);
-        this.predictor.update(RTT);
         //LOGGER.info("avg: {} {}", averageRTT, getPredict());
     }
 

@@ -35,7 +35,7 @@ public class Predictor {
         double[] tempWeights = new double[N];
         for (int i = 0; i < N; ++i) {
             double l = predictions[i] < RTT ? 2 * RTT : Math.pow(predictions[i] - RTT, 2);
-            tempWeights[i] = Double.isNaN(Math.exp(-a * l)) ? 0 : weights[i] * Math.exp(-a * l);
+            tempWeights[i] = weights[i] * Math.exp(-a * l);
         }
         double pool = 0;
         for (int i = 0; i < N; ++i) {

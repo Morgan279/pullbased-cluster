@@ -29,7 +29,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        }
 
 //        virtualProvider.waiting.incrementAndGet();
-        virtualProvider.isConcurrentLimited();
+//        virtualProvider.isConcurrentLimited();
 //        while (virtualProvider.isConcurrentLimited()) {
 //            Thread.yield();
 //        }
@@ -49,7 +49,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        RpcContext.getClientAttachment().setObjectAttachment("timeout-countdown", TimeoutCountDown.newCountDown(virtualProvider.getLatencyThreshold(), TimeUnit.MILLISECONDS));
 
         //invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
-        invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound(virtualProvider.concurrency)));
+        invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound()));
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.refreshErrorSampling();
