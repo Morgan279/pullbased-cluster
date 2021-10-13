@@ -99,15 +99,18 @@ public class RoundRobinProcessor {
         int sumWeight = 0;
         boolean sameWeight = true;
         int lastWeight = 0;
+        StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0, len = invokers.size(); i < len; ++i) {
             Invoker<T> invoker = invokers.get(i);
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             sumWeight += virtualProvider.waiting;
+            stringBuilder.append(virtualProvider.waiting).append("|").append(virtualProvider.concurrentLimitProcessor.getInflightBound()).append("|").append(virtualProvider.concurrentLimitProcessor.computingRateEstimated).append(" ");
             if (i > 0 && sameWeight && virtualProvider.waiting != lastWeight) {
                 sameWeight = false;
             }
             lastWeight = virtualProvider.waiting;
         }
+        LOGGER.info("weights: {}", stringBuilder.toString());
         if (sumWeight > 3 && !sameWeight) {
             int offset = ThreadLocalRandom.current().nextInt(sumWeight << 1);
             for (Invoker<T> invoker : invokers) {
