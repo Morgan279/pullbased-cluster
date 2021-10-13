@@ -89,7 +89,7 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(1.5, 2.5 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(ThreadLocalRandom.current().nextDouble(0.5, 1.5 + getConcurrencyRatio() - getErrorRatio()) * 20);
     }
 
