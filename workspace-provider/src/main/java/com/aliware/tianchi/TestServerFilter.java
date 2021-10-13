@@ -37,7 +37,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         waiting.incrementAndGet();
         if (concurrency.get() > bound) {
-            throw new RpcException();
+            throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION, "LIMIT_EXCEEDED");
         }
         waiting.decrementAndGet();
         concurrency.incrementAndGet();

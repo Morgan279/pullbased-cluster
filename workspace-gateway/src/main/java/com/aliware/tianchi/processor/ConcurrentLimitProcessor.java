@@ -46,7 +46,9 @@ public class ConcurrentLimitProcessor {
 
     private volatile boolean congestion;
 
-    private double sum = 0;
+    private volatile double sum = 0;
+
+    private volatile int counter = 0;
 
     private int round = 0;
 
@@ -114,8 +116,8 @@ public class ConcurrentLimitProcessor {
         @Override
         public void run() {
             RTPropEstimated = lastRTPropEstimated;
-            computingRateEstimated = sum / roundCounter.get();
-            sum = 0;
+            computingRateEstimated = sum / Math.max(counter, 1);
+            sum = counter = 0;
             scheduledExecutorService.schedule(this, Math.round(8 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
     }
@@ -123,11 +125,11 @@ public class ConcurrentLimitProcessor {
     public void handleProbe(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
         lastComputingRateEstimated = computingRate;
-        roundCounter.incrementAndGet();
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
             sum += computingRate;
+            ++counter;
         }
 
     }

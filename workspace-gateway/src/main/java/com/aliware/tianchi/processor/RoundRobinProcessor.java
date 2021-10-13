@@ -110,7 +110,7 @@ public class RoundRobinProcessor {
             }
             lastWeight = virtualProvider.waiting;
         }
-        LOGGER.info("weights: {}", stringBuilder.toString());
+//        LOGGER.info("weights: {}", stringBuilder.toString());
         if (sumWeight > 3 && !sameWeight) {
             int offset = ThreadLocalRandom.current().nextInt(sumWeight << 1);
             for (Invoker<T> invoker : invokers) {
