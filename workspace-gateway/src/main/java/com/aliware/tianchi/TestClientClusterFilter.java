@@ -4,6 +4,10 @@ import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 客户端过滤器（选址前）
@@ -14,15 +18,17 @@ import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listener {
 
+    private static final AtomicInteger counter = new AtomicInteger();
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(TestClientClusterFilter.class);
+
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-//        try {
-//            return invoker.invoke(invocation);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-        return invoker.invoke(invocation);
+        counter.incrementAndGet();
+        return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+            LOGGER.info("concurrency: {}", counter.getAndDecrement());
+        });
     }
 
     @Override
