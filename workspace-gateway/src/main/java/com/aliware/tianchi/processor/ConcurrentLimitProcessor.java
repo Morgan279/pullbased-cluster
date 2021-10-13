@@ -118,7 +118,7 @@ public class ConcurrentLimitProcessor {
             RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = sum / Math.max(counter, 1);
             sum = counter = 0;
-            scheduledExecutorService.schedule(this, Math.round(8 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            scheduledExecutorService.schedule(this, Math.round(10 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
     }
 
