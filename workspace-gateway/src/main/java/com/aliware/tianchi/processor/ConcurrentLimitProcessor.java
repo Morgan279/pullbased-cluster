@@ -89,7 +89,7 @@ public class ConcurrentLimitProcessor {
         scheduledExecutorService.scheduleAtFixedRate(() -> {
             RTPropEstimated = RTSum / Math.max(1, RTCounter);
             RTSum = RTCounter = 0;
-        }, 100, 100, TimeUnit.MILLISECONDS);
+        }, 100, 50, TimeUnit.MILLISECONDS);
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
