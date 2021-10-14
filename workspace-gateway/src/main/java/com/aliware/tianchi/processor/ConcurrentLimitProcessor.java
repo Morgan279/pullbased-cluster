@@ -50,6 +50,10 @@ public class ConcurrentLimitProcessor {
 
     private volatile int counter = 0;
 
+    private volatile double RTSum = 0;
+
+    private volatile int RTCounter = 0;
+
     private int round = 0;
 
     private final int threads;
@@ -80,9 +84,12 @@ public class ConcurrentLimitProcessor {
 
 
     private void initSchedule() {
-        scheduledExecutorService.schedule(new GainUpdater(), 1000, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.schedule(new SampleUpdater(), 1000, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = lastRTPropEstimated, 1000, 10, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new GainUpdater(), 100, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new SampleUpdater(), 100, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            RTPropEstimated = RTSum / Math.max(1, RTCounter);
+            RTSum = RTCounter = 0;
+        }, 100, 10, TimeUnit.MILLISECONDS);
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -131,6 +138,8 @@ public class ConcurrentLimitProcessor {
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
             sum += computingRate;
             ++counter;
+            RTSum += RTT;
+            ++RTCounter;
         }
 
     }

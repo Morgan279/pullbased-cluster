@@ -137,6 +137,9 @@ public class VirtualProvider {
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
         if (now - lastSamplingTime > 20) {
+            if (getErrorRatio() > 0.8) {
+                LOGGER.info("{} infer crash | error ratio: {}", port, getErrorRatio());
+            }
             assigned.set(1);
             error.set(0);
             lastSamplingTime = now;
