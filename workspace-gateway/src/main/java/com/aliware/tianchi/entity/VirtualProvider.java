@@ -89,8 +89,8 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2.5, 3.5 + getConcurrencyRatio() - getErrorRatio()));
-        //return Math.round(ThreadLocalRandom.current().nextDouble(0.5, 1.5 + getConcurrencyRatio() - getErrorRatio()) * 20);
+        //return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2.5, 3.5 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()) * 100);
     }
 
     public boolean isConcurrentLimited() {
@@ -113,7 +113,7 @@ public class VirtualProvider {
         double RTT = latency / 1e6;
         double computingRate = (computed.get() - lastComputed) / RTT;
         this.concurrentLimitProcessor.handleProbe(RTT, computingRate);
-        this.predictor.update(RTT);
+//        this.predictor.update(RTT);
 //        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
 //        esRtt = 0.875 * esRtt + 0.125 * RTT;
 //        LOGGER.info("es: {} act:{} predic: {}", esRtt, RTT, predictor.getPrediction());
