@@ -86,10 +86,10 @@ public class ConcurrentLimitProcessor {
     private void initSchedule() {
         scheduledExecutorService.schedule(new GainUpdater(), 100, TimeUnit.MILLISECONDS);
         scheduledExecutorService.schedule(new SampleUpdater(), 100, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            RTPropEstimated = RTSum / Math.max(1, RTCounter);
-            RTSum = RTCounter = 0;
-        }, 100, 10, TimeUnit.MILLISECONDS);
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            RTPropEstimated = RTSum / Math.max(1, RTCounter);
+//            RTSum = RTCounter = 0;
+//        }, 100, 10, TimeUnit.MILLISECONDS);
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -123,7 +123,7 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            //RTPropEstimated = lastRTPropEstimated;
+            RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = sum / Math.max(counter, 1);
             sum = counter = 0;
             scheduledExecutorService.schedule(this, Math.round(10 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
@@ -138,8 +138,8 @@ public class ConcurrentLimitProcessor {
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
             sum += computingRate;
             ++counter;
-            RTSum += RTT;
-            ++RTCounter;
+//            RTSum += RTT;
+//            ++RTCounter;
         }
 
     }
