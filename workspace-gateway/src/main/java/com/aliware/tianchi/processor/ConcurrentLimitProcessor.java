@@ -80,8 +80,9 @@ public class ConcurrentLimitProcessor {
 
 
     private void initSchedule() {
-        scheduledExecutorService.schedule(new GainUpdater(), 1, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.schedule(new SampleUpdater(), 1, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new GainUpdater(), 1000, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.schedule(new SampleUpdater(), 1000, TimeUnit.MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(() -> RTPropEstimated = lastRTPropEstimated, 1000, 10, TimeUnit.MILLISECONDS);
         //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
         //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -115,7 +116,7 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            RTPropEstimated = lastRTPropEstimated;
+            //RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = sum / Math.max(counter, 1);
             sum = counter = 0;
             scheduledExecutorService.schedule(this, Math.round(10 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
