@@ -21,7 +21,7 @@ public class ConcurrentLimitProcessor {
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1.25, 0.9, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -126,7 +126,7 @@ public class ConcurrentLimitProcessor {
             RTPropEstimated = lastRTPropEstimated;
             computingRateEstimated = sum / Math.max(counter, 1);
             sum = counter = 0;
-            scheduledExecutorService.schedule(this, Math.round(12 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            scheduledExecutorService.schedule(this, Math.round(10 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
     }
 
