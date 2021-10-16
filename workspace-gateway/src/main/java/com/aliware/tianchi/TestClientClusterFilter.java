@@ -27,7 +27,7 @@ public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listen
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         counter.incrementAndGet();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
-            LOGGER.info("concurrency: {}", counter.getAndDecrement());
+            //LOGGER.info("concurrency: {}", counter.getAndDecrement());
         });
     }
 

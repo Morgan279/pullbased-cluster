@@ -129,14 +129,14 @@ public class VirtualProvider {
 //        }
 //        Supervisor.workLoads.add(new WorkLoad(port, RTT));
 
-        //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, computingRate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
+        //LOGGER.info("{}port#?{}#?{}#?{}#?{}#?{}", port, RTT, rate, inflight.get(), concurrentLimitProcessor.getInflightBound(), waiting.get());
         //this.recordLatency(RTT);
         //LOGGER.info("avg: {} {}", averageRTT, getPredict());
     }
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 20) {
+        if (now - lastSamplingTime > 10) {
             if (getErrorRatio() > 0.8) {
                 LOGGER.info("{} infer crash | error ratio: {}", port, getErrorRatio());
             }

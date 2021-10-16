@@ -23,6 +23,8 @@ public class ConcurrentLimitProcessor {
 
     private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
 
+    private static final double[] GAIN_VALUES2 = {0.75, 1.25, 1, 1, 1, 1, 1, 1};
+
     private final Object UPDATE_LOCK = new Object();
 
     private volatile ConcurrentLimitStatus status;
@@ -56,6 +58,8 @@ public class ConcurrentLimitProcessor {
 
     private int round = 0;
 
+    private final ProbeProcessor probeProcessor = new ProbeProcessor();
+
     private final int threads;
 
     public ConcurrentLimitProcessor(int threads) {
@@ -64,9 +68,9 @@ public class ConcurrentLimitProcessor {
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
-        this.RTPropEstimated = threads / 500D;
+        this.RTPropEstimated = 10;
         this.lastRTPropEstimated = RTPropEstimated;
-        this.computingRateEstimated = threads;
+        this.computingRateEstimated = 0;
         this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
@@ -79,34 +83,22 @@ public class ConcurrentLimitProcessor {
 //            RTPropEstimated = lastRTPropEstimated * 1.5;
 //            //System.out.println((int) (gain * computingRateEstimated * RTPropEstimated));
 //        }
-        return (int) (gain * computingRateEstimated * RTPropEstimated);
+        //return (int) (gain * computingRateEstimated * RTPropEstimated);
+        return (int) (probeProcessor.bound * gain);
     }
 
+    private final GainUpdater gainUpdater = new GainUpdater();
 
     private void initSchedule() {
-        scheduledExecutorService.schedule(new GainUpdater(), 100, TimeUnit.MILLISECONDS);
-        scheduledExecutorService.schedule(new SampleUpdater(), 100, TimeUnit.MILLISECONDS);
+        probeProcessor.probe();
+        refreshSampling();
+        scheduledExecutorService.execute(sampleUpdater);
+//        scheduledExecutorService.schedule(gainUpdater, 5000, TimeUnit.MILLISECONDS);
+//        scheduledExecutorService.schedule(new SampleUpdater(), 100, TimeUnit.MILLISECONDS);
 //        scheduledExecutorService.scheduleAtFixedRate(() -> {
 //            RTPropEstimated = RTSum / Math.max(1, RTCounter);
 //            RTSum = RTCounter = 0;
 //        }, 100, 10, TimeUnit.MILLISECONDS);
-        //funnelScheduler.schedule(new Leaking(), 1L, TimeUnit.SECONDS);
-        //scheduledExecutorService.schedule(() -> this.status = ConcurrentLimitStatus.PROBE, 4000, TimeUnit.MILLISECONDS);
-//        scheduledExecutorService.scheduleAtFixedRate(() -> {
-//            gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-////            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-////                gain = GAIN_VALUES[roundCounter.getAndIncrement() % GAIN_VALUES.length];
-////            }
-//        }, 1000, 1250, TimeUnit.MICROSECONDS);
-
-//        scheduledExecutorService.scheduleAtFixedRate(() -> {
-//            RTPropEstimated = lastRTPropEstimated;
-//            computingRateEstimated = lastComputingRateEstimated;
-////            if (ConcurrentLimitStatus.PROBE.equals(this.status)) {
-////                computingRateEstimated = lastComputingRateEstimated;
-////                RTPropEstimated = lastRTPropEstimated;
-////            }
-//        }, 1000, 10, TimeUnit.MILLISECONDS);
 
     }
 
@@ -114,25 +106,95 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            gain = GAIN_VALUES[round++ % GAIN_VALUES.length];
-            scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            //gain = GAIN_VALUES[round++ % GAIN_VALUES.length];
+//            if (computingRateEstimated < 3) {
+//                scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+//                return;
+//            }
+
+            if (probeProcessor.onConverge(computingRateEstimated)) {
+                logger.info("converged: {}", probeProcessor.bound);
+                startCruising();
+            } else {
+                refreshSampling();
+                scheduledExecutorService.schedule(this, 100, TimeUnit.MILLISECONDS);
+            }
         }
     }
+
+    private long getSamplingInterval() {
+        //return Math.round(RTPropEstimated * 1024D);
+        return probeProcessor.isDraining() ? 3 : 320;
+    }
+
+    private void startCruising() {
+        scheduledExecutorService.schedule(() -> {
+            probeProcessor.probe();
+            refreshSampling();
+            scheduledExecutorService.execute(sampleUpdater);
+//            congestion = false;
+//            this.refreshSampling();
+//            lastSamplingTime = System.currentTimeMillis() + 320;
+            //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+        }, Math.round(1000 * RTPropEstimated), TimeUnit.MILLISECONDS);
+    }
+
+    private void refreshSampling() {
+        RTPropEstimated = lastRTPropEstimated;
+        computingRateEstimated = sum / Math.max(counter, 1);
+        sum = counter = 0;
+        round = 0;
+    }
+
+
+    SampleUpdater sampleUpdater = new SampleUpdater();
 
     private class SampleUpdater implements Runnable {
 
         @Override
         public void run() {
-            RTPropEstimated = lastRTPropEstimated;
-            computingRateEstimated = sum / Math.max(counter, 1);
-            sum = counter = 0;
-            scheduledExecutorService.schedule(this, Math.round(10 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            gain = GAIN_VALUES2[round++ % GAIN_VALUES2.length];
+            if (round == GAIN_VALUES2.length) {
+                onConverge();
+            } else {
+                scheduledExecutorService.schedule(this, Math.round(2 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+            }
+        }
+    }
+
+    private void onConverge() {
+        if (probeProcessor.onConverge(computingRateEstimated)) {
+            congestion = true;
+            startCruising();
+        } else {
+            refreshSampling();
+            scheduledExecutorService.execute(sampleUpdater);
         }
     }
 
     public void handleProbe(double RTT, double computingRate) {
         lastRTPropEstimated = RTT;
-        lastComputingRateEstimated = computingRate;
+//        lastComputingRateEstimated = computingRate;
+//        long now = System.currentTimeMillis();
+//        if (!congestion && now - lastSamplingTime > getSamplingInterval()) {
+//            if (probeProcessor.onConverge(computingRateEstimated)) {
+//                this.congestion = true;
+//                this.startCruising();
+//            } else {
+//                this.refreshSampling();
+//            }
+//            lastSamplingTime = now;
+//        } else {
+//            synchronized (UPDATE_LOCK) {
+//                RTPropEstimated = Math.min(RTPropEstimated, RTT);
+//                computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+//                sum += computingRate;
+//                ++counter;
+////            RTSum += RTT;
+////            ++RTCounter;
+//            }
+//        }
+
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
@@ -141,7 +203,6 @@ public class ConcurrentLimitProcessor {
 //            RTSum += RTT;
 //            ++RTCounter;
         }
-
     }
 
     public void onACK(double RTT, double computingRate) {
@@ -198,12 +259,12 @@ public class ConcurrentLimitProcessor {
 //        RTPropEstimated = Math.min(RTPropEstimated, RTT);
         synchronized (UPDATE_LOCK) {
             RTPropEstimated = Math.min(RTPropEstimated, RTT);
-            //computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+            //computingRateEstimated = Math.max(computingRateEstimated, rate);
         }
     }
 
     private void handleDrain(double computingRate) {
-//        computingRateEstimated = Math.max(computingRateEstimated, computingRate);
+//        computingRateEstimated = Math.max(computingRateEstimated, rate);
         synchronized (UPDATE_LOCK) {
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
         }
