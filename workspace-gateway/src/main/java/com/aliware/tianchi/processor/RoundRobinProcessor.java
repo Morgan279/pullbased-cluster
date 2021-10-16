@@ -73,7 +73,7 @@ public class RoundRobinProcessor {
         for (int i = 0, len = invokers.size(); i < len; ++i) {
             Invoker<T> invoker = invokers.get(i);
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-            virtualProvider.weight = (int) Math.round(Math.sqrt(virtualProvider.concurrentLimitProcessor.computingRateEstimated));
+            virtualProvider.weight = (int) Math.round(virtualProvider.concurrentLimitProcessor.computingRateEstimated);
             sumWeight += virtualProvider.weight;
             stringBuilder.append(virtualProvider.weight).append("|").append(virtualProvider.concurrentLimitProcessor.getInflightBound()).append("|").append(virtualProvider.concurrentLimitProcessor.computingRateEstimated).append(" ");
             if (i > 0 && sameWeight && virtualProvider.weight != lastWeight) {
