@@ -123,7 +123,7 @@ public class RoundRobinProcessor {
             }
         }
 
-        return selectMaxWeight(invokers);
-        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        //return selectMaxWeight(invokers);
+        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 }
