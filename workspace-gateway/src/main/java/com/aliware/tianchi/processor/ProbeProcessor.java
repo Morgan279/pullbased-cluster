@@ -6,7 +6,7 @@ public class ProbeProcessor {
 
     private static final int UPPER_BOUND = 160;
 
-    private static final int LOWER_BOUND = 30;
+    private static final int LOWER_BOUND = 20;
 
     private int l = LOWER_BOUND;
 
