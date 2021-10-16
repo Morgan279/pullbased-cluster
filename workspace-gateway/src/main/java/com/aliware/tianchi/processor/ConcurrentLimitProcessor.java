@@ -136,7 +136,7 @@ public class ConcurrentLimitProcessor {
 //            this.refreshSampling();
 //            lastSamplingTime = System.currentTimeMillis() + 320;
             //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 2400, TimeUnit.MILLISECONDS);
+        }, 2000, TimeUnit.MILLISECONDS);
     }
 
     private void refreshSampling() {
@@ -158,7 +158,7 @@ public class ConcurrentLimitProcessor {
                 gain = 1;
                 onConverge();
             } else {
-                scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+                scheduledExecutorService.schedule(this, Math.round(2.5 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
             }
         }
     }
