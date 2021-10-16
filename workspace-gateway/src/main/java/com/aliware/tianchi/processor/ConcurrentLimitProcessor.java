@@ -23,7 +23,7 @@ public class ConcurrentLimitProcessor {
 
     private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
 
-    private static final double[] GAIN_VALUES2 = {0.75, 1.25, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES2 = {0.75, 1.15, 1, 1, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -136,7 +136,7 @@ public class ConcurrentLimitProcessor {
 //            this.refreshSampling();
 //            lastSamplingTime = System.currentTimeMillis() + 320;
             //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, Math.round(1000 * RTPropEstimated), TimeUnit.MILLISECONDS);
+        }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void refreshSampling() {
@@ -157,7 +157,7 @@ public class ConcurrentLimitProcessor {
             if (round == GAIN_VALUES2.length) {
                 onConverge();
             } else {
-                scheduledExecutorService.schedule(this, Math.round(2 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+                scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
             }
         }
     }
