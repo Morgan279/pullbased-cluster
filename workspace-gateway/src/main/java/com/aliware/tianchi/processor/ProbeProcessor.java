@@ -4,9 +4,9 @@ import com.aliware.tianchi.entity.ProbeRecord;
 
 public class ProbeProcessor {
 
-    private static final int UPPER_BOUND = 160;
+    private static final int UPPER_BOUND = 170;
 
-    private static final int LOWER_BOUND = 20;
+    private static final int LOWER_BOUND = 40;
 
     private int l = LOWER_BOUND;
 
