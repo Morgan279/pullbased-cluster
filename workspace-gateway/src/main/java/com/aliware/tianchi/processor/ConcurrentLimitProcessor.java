@@ -136,7 +136,7 @@ public class ConcurrentLimitProcessor {
 //            this.refreshSampling();
 //            lastSamplingTime = System.currentTimeMillis() + 320;
             //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 4000, TimeUnit.MILLISECONDS);
+        }, 2000, TimeUnit.MILLISECONDS);
     }
 
     private void refreshSampling() {
