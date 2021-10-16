@@ -15,7 +15,7 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4, new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(6, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
@@ -136,7 +136,7 @@ public class ConcurrentLimitProcessor {
 //            this.refreshSampling();
 //            lastSamplingTime = System.currentTimeMillis() + 320;
             //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 1000, TimeUnit.MILLISECONDS);
+        }, 2400, TimeUnit.MILLISECONDS);
     }
 
     private void refreshSampling() {
@@ -155,6 +155,7 @@ public class ConcurrentLimitProcessor {
         public void run() {
             gain = GAIN_VALUES2[round++ % GAIN_VALUES2.length];
             if (round == GAIN_VALUES2.length) {
+                gain = 1;
                 onConverge();
             } else {
                 scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
