@@ -15,13 +15,13 @@ public class ConcurrentLimitProcessor {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(6, new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
     private static final int CW_FACTOR = 6;
 
-    private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
+    private static final double[] GAIN_VALUES = {1, 1, 1, 1, 1, 1, 1, 1};
 
     private final Object UPDATE_LOCK = new Object();
 
@@ -125,20 +125,9 @@ public class ConcurrentLimitProcessor {
         return probeProcessor.isDraining() ? 3 : 320;
     }
 
-    private void startCruising() {
-        scheduledExecutorService.schedule(() -> {
-            probeProcessor.probe();
-            refreshSampling();
-            scheduledExecutorService.execute(sampleUpdater);
-//            congestion = false;
-//            this.refreshSampling();
-//            lastSamplingTime = System.currentTimeMillis() + 320;
-            //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 2000, TimeUnit.MILLISECONDS);
-    }
-
     private void refreshSampling() {
         RTPropEstimated = lastRTPropEstimated;
+        lastComputingRateEstimated = computingRateEstimated;
         computingRateEstimated = sum / Math.max(counter, 1);
         sum = counter = 0;
         round = 0;
@@ -163,12 +152,39 @@ public class ConcurrentLimitProcessor {
 
     private void onConverge() {
         if (probeProcessor.onConverge(computingRateEstimated)) {
-            congestion = true;
+            //congestion = true;
+            refreshSampling();
             startCruising();
         } else {
             refreshSampling();
             scheduledExecutorService.execute(sampleUpdater);
         }
+    }
+
+    private void startCruising() {
+        ++round;
+        if (round % 8 == 0) {
+            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.2) {
+                gain = 1;
+                probeProcessor.probe();
+                refreshSampling();
+                scheduledExecutorService.execute(sampleUpdater);
+            } else {
+                refreshSampling();
+                scheduledExecutorService.execute(this::startCruising);
+            }
+        } else {
+            scheduledExecutorService.schedule(this::startCruising, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+        }
+//        scheduledExecutorService.schedule(() -> {
+//            probeProcessor.probe();
+//            refreshSampling();
+//            scheduledExecutorService.execute(sampleUpdater);
+////            congestion = false;
+////            this.refreshSampling();
+////            lastSamplingTime = System.currentTimeMillis() + 320;
+//            //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+//        }, 2000, TimeUnit.MILLISECONDS);
     }
 
     public void handleProbe(double RTT, double computingRate) {
