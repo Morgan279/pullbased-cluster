@@ -166,31 +166,38 @@ public class ConcurrentLimitProcessor {
     private final StopWatch stopWatch = new StopWatch();
 
     private void startCruising() {
-//        ++round;
-//        if (round % 8 == 0) {
-//            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.05) {
-//                gain = 1;
-//                probeProcessor.probe();
-//                refreshSampling();
-//                logger.info("cruise last time: {}", stopWatch.stop());
-//                scheduledExecutorService.execute(sampleUpdater);
-//            } else {
-//                refreshSampling();
-//                scheduledExecutorService.execute(this::startCruising);
-//            }
-//        } else {
-//            scheduledExecutorService.schedule(this::startCruising, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-//        }
-        scheduledExecutorService.schedule(() -> {
-            gain = 1;
-            probeProcessor.probe();
-            refreshSampling();
-            scheduledExecutorService.execute(sampleUpdater);
-//            congestion = false;
-//            this.refreshSampling();
-//            lastSamplingTime = System.currentTimeMillis() + 320;
-            //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 2500, TimeUnit.MILLISECONDS);
+        ++round;
+        if (round % 8 == 0) {
+            logger.info("Delta rate: {}", Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated);
+            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.05) {
+                gain = 1;
+                probeProcessor.probe();
+                refreshSampling();
+                logger.info("cruise last time: {}", stopWatch.stop());
+                scheduledExecutorService.execute(sampleUpdater);
+            } else {
+                RTPropEstimated = lastRTPropEstimated;
+                lastComputingRateEstimated = computingRateEstimated;
+                computingRateEstimated = sum / Math.max(counter, 1);
+                sum = counter = 0;
+                if (round >= 24) {
+                    gain *= 1.25;
+                }
+                scheduledExecutorService.execute(this::startCruising);
+            }
+        } else {
+            scheduledExecutorService.schedule(this::startCruising, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+        }
+//        scheduledExecutorService.schedule(() -> {
+//            gain = 1;
+//            probeProcessor.probe();
+//            refreshSampling();
+//            scheduledExecutorService.execute(sampleUpdater);
+////            congestion = false;
+////            this.refreshSampling();
+////            lastSamplingTime = System.currentTimeMillis() + 320;
+//            //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+//        }, 2500, TimeUnit.MILLISECONDS);
     }
 
     public void handleProbe(double RTT, double computingRate) {
