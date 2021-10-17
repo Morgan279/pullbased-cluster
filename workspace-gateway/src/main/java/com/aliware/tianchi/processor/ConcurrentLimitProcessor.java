@@ -155,7 +155,7 @@ public class ConcurrentLimitProcessor {
         if (probeProcessor.onConverge(computingRateEstimated)) {
             //congestion = true;
             refreshSampling();
-            ///stopWatch.start();
+            stopWatch.start();
             startCruising();
         } else {
             refreshSampling();
@@ -168,7 +168,7 @@ public class ConcurrentLimitProcessor {
     private void startCruising() {
 //        ++round;
 //        if (round % 8 == 0) {
-//            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.01) {
+//            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.05) {
 //                gain = 1;
 //                probeProcessor.probe();
 //                refreshSampling();
@@ -190,7 +190,7 @@ public class ConcurrentLimitProcessor {
 //            this.refreshSampling();
 //            lastSamplingTime = System.currentTimeMillis() + 320;
             //scheduledExecutorService.schedule(gainUpdater, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
-        }, 1000, TimeUnit.MILLISECONDS);
+        }, 2500, TimeUnit.MILLISECONDS);
     }
 
     public void handleProbe(double RTT, double computingRate) {
