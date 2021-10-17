@@ -23,8 +23,6 @@ public class ConcurrentLimitProcessor {
 
     private static final double[] GAIN_VALUES = {1.25, 0.75, 1, 1, 1, 1, 1, 1};
 
-    private static final double[] GAIN_VALUES2 = {0.75, 1.15, 1, 1, 1, 1, 1, 1, 1, 1};
-
     private final Object UPDATE_LOCK = new Object();
 
     private volatile ConcurrentLimitStatus status;
@@ -153,12 +151,12 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            gain = GAIN_VALUES2[round++ % GAIN_VALUES2.length];
-            if (round == GAIN_VALUES2.length) {
+            gain = probeProcessor.gains[round++ % probeProcessor.gains.length];
+            if (round == probeProcessor.gains.length) {
                 gain = 1;
                 onConverge();
             } else {
-                scheduledExecutorService.schedule(this, Math.round(2.5 * RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+                scheduledExecutorService.schedule(this, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
             }
         }
     }

@@ -8,6 +8,12 @@ public class ProbeProcessor {
 
     private static final int LOWER_BOUND = 10;
 
+    private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+    private static final double[] RIGHT_GAIN_VALUES = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+    public double[] gains = LEFT_GAIN_VALUES;
+
     private int l = LOWER_BOUND;
 
     private int r = UPPER_BOUND;
@@ -32,6 +38,7 @@ public class ProbeProcessor {
             left.rate = newestComputingRate;
             //探测右值
             bound = right.bound = r - (r - l + 1) / 3;
+            gains = RIGHT_GAIN_VALUES;
             lastStatus = LastStatus.LEFT;
         } else if (LastStatus.LEFT.equals(lastStatus)) {
             //现在拿到右值
@@ -43,6 +50,7 @@ public class ProbeProcessor {
             }
             //探测新的左值
             bound = left.bound = l + (r - l + 1) / 3;
+            gains = LEFT_GAIN_VALUES;
             lastStatus = LastStatus.RIGHT;
         }
 //        else {
@@ -54,11 +62,12 @@ public class ProbeProcessor {
     }
 
     public void probe() {
-//        l = Math.max(l - 30, LOWER_BOUND);
-//        r = Math.min(r + 30, UPPER_BOUND);
-        l = LOWER_BOUND;
-        r = UPPER_BOUND;
+        l = Math.max(l - 30, LOWER_BOUND);
+        r = Math.min(r + 30, UPPER_BOUND);
+//        l = LOWER_BOUND;
+//        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
+        gains = LEFT_GAIN_VALUES;
         this.lastStatus = LastStatus.RIGHT;
     }
 
