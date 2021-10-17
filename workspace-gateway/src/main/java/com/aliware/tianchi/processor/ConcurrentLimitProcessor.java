@@ -168,8 +168,8 @@ public class ConcurrentLimitProcessor {
     private void startCruising() {
         ++round;
         if (round % 8 == 0) {
-            logger.info("Delta rate: {}", Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated);
-            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.05) {
+            logger.info("Delta rate: {}", (lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated);
+            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.1) {
                 gain = 1;
                 probeProcessor.probe();
                 refreshSampling();
@@ -181,7 +181,7 @@ public class ConcurrentLimitProcessor {
                 computingRateEstimated = sum / Math.max(counter, 1);
                 sum = counter = 0;
                 if (round >= 24) {
-                    gain *= 1.25;
+                    gain *= 1.1;
                 }
                 scheduledExecutorService.execute(this::startCruising);
             }
