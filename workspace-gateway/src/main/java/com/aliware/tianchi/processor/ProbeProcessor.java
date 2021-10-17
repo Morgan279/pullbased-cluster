@@ -4,13 +4,13 @@ import com.aliware.tianchi.entity.ProbeRecord;
 
 public class ProbeProcessor {
 
-    private static final int UPPER_BOUND = 170;
+    private static final int UPPER_BOUND = 200;
 
-    private static final int LOWER_BOUND = 10;
+    private static final int LOWER_BOUND = 30;
 
-    private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
-    private static final double[] RIGHT_GAIN_VALUES = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    private static final double[] RIGHT_GAIN_VALUES = {1, 1, 1, 1, 1, 1, 1, 1};
 
     public double[] gains = LEFT_GAIN_VALUES;
 
@@ -62,8 +62,8 @@ public class ProbeProcessor {
     }
 
     public void probe() {
-        l = Math.max(l - 30, LOWER_BOUND);
-        r = Math.min(r + 30, UPPER_BOUND);
+        l = Math.max(l - 20, LOWER_BOUND);
+        r = Math.min(r + 20, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
