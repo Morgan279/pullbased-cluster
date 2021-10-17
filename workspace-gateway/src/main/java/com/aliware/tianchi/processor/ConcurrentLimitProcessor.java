@@ -168,7 +168,7 @@ public class ConcurrentLimitProcessor {
     private void startCruising() {
         ++round;
         if (round % 8 == 0) {
-            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.1) {
+            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.01) {
                 gain = 1;
                 probeProcessor.probe();
                 refreshSampling();
