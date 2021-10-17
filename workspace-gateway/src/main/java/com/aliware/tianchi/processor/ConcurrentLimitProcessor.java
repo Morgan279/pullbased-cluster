@@ -1,6 +1,7 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.constant.Config;
+import com.aliware.tianchi.tool.StopWatch;
 import io.netty.util.internal.ThreadLocalRandom;
 import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
@@ -154,6 +155,7 @@ public class ConcurrentLimitProcessor {
         if (probeProcessor.onConverge(computingRateEstimated)) {
             //congestion = true;
             refreshSampling();
+            stopWatch.start();
             startCruising();
         } else {
             refreshSampling();
@@ -161,13 +163,16 @@ public class ConcurrentLimitProcessor {
         }
     }
 
+    private final StopWatch stopWatch = new StopWatch();
+
     private void startCruising() {
         ++round;
         if (round % 8 == 0) {
-            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.2) {
+            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.1) {
                 gain = 1;
                 probeProcessor.probe();
                 refreshSampling();
+                logger.info("cruise last time: {}", stopWatch.stop());
                 scheduledExecutorService.execute(sampleUpdater);
             } else {
                 refreshSampling();
