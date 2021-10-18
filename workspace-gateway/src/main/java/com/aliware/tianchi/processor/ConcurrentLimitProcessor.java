@@ -161,7 +161,7 @@ public class ConcurrentLimitProcessor {
 
     private void updateSample() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime < 2 * RTPropEstimated) return;
+        if (now - lastSamplingTime < 3 * RTPropEstimated) return;
         lastSamplingTime = now;
         gain = probeProcessor.gains[round % probeProcessor.gains.length];
         if (round++ == probeProcessor.gains.length) {
@@ -195,7 +195,7 @@ public class ConcurrentLimitProcessor {
         lastSamplingTime = now;
         if (round % 8 == 0) {
             logger.info("Delta rate: {}", (lastComputingRateEstimated - computingRateEstimated) / Math.max(lastComputingRateEstimated, 1));
-            if (lastComputingRateEstimated > 0 && Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.3) {
+            if (lastComputingRateEstimated > 0 && Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.5) {
                 logger.info("cruise last time: {}", stopWatch.stop());
                 gain = 1;
                 probeProcessor.probe();
