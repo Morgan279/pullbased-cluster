@@ -68,7 +68,7 @@ public class ConcurrentLimitProcessor implements Observer {
 
     public ConcurrentLimitProcessor(int threads, Sampler sampler) {
         this.threads = threads;
-        this.gain = 2 / Math.log(2);
+        this.gain = 1;
         this.status = ConcurrentLimitStatus.PROBE;
         this.roundCounter = new AtomicInteger(0);
         this.congestion = false;
