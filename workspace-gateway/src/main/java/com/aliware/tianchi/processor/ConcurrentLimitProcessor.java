@@ -97,7 +97,7 @@ public class ConcurrentLimitProcessor implements Observer {
             case CRUISING:
                 ++round;
                 //logger.info("Delta rate: {}", deltaRate);
-                if (Math.abs(deltaRate) > 0.5) {
+                if (Math.abs(deltaRate) > 0.2) {
                     logger.info("cruise last time: {}", stopWatch.stop());
                     gain = 1;
                     round = 0;
@@ -113,7 +113,7 @@ public class ConcurrentLimitProcessor implements Observer {
                     stopWatch.start();
                     this.status = ConcurrentLimitStatus.CRUISING;
                 } else if (probeProcessor.isProbingLeft()) {
-                    gain = 0.75;
+                    gain = 0.8;
                     scheduledExecutorService.schedule(() -> gain = 1,3, TimeUnit.MILLISECONDS);
                 }
 
