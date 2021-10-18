@@ -61,6 +61,8 @@ public class ConcurrentLimitProcessor {
 
     private final int threads;
 
+    private volatile boolean init = false;
+
     public ConcurrentLimitProcessor(int threads) {
         this.threads = threads;
         this.gain = 2 / Math.log(2);
@@ -73,7 +75,10 @@ public class ConcurrentLimitProcessor {
         this.lastComputingRateEstimated = computingRateEstimated;
         this.lastSamplingTime = System.currentTimeMillis();
         this.lastPhaseStartedTime = System.currentTimeMillis();
-        this.initSchedule();
+        //this.initSchedule();
+        probeProcessor.probe();
+        refreshSampling();
+        updateSample();
     }
 
 
@@ -127,11 +132,14 @@ public class ConcurrentLimitProcessor {
     }
 
     private void refreshSampling() {
-        RTPropEstimated = lastRTPropEstimated;
+        //RTPropEstimated = lastRTPropEstimated;
+        RTPropEstimated = RTSum / Math.max(RTCounter, 1);
         lastComputingRateEstimated = computingRateEstimated;
         computingRateEstimated = sum / Math.max(counter, 1);
         sum = counter = 0;
+        RTSum = RTCounter = 0;
         round = 0;
+        lastSamplingTime = System.currentTimeMillis();
     }
 
 
@@ -141,8 +149,8 @@ public class ConcurrentLimitProcessor {
 
         @Override
         public void run() {
-            gain = probeProcessor.gains[round++ % probeProcessor.gains.length];
-            if (round == probeProcessor.gains.length) {
+            gain = probeProcessor.gains[round % probeProcessor.gains.length];
+            if (round++ == probeProcessor.gains.length) {
                 gain = 1;
                 onConverge();
             } else {
@@ -151,43 +159,63 @@ public class ConcurrentLimitProcessor {
         }
     }
 
+    private void updateSample() {
+        long now = System.currentTimeMillis();
+        if (now - lastSamplingTime < RTPropEstimated) return;
+        lastSamplingTime = now;
+        gain = probeProcessor.gains[round % probeProcessor.gains.length];
+        if (round++ == probeProcessor.gains.length) {
+            gain = 1;
+            onConverge();
+        }
+    }
+
     private void onConverge() {
         if (probeProcessor.onConverge(computingRateEstimated)) {
             //congestion = true;
-            refreshSampling();
             stopWatch.start();
-            startCruising();
+            refreshSampling();
+            this.status = ConcurrentLimitStatus.CRUISING;
+            //startCruising();
         } else {
             refreshSampling();
-            scheduledExecutorService.execute(sampleUpdater);
+            updateSample();
+            //scheduledExecutorService.execute(sampleUpdater);
         }
     }
 
     private final StopWatch stopWatch = new StopWatch();
 
     private void startCruising() {
+        long now = System.currentTimeMillis();
+        if (now - lastSamplingTime < RTPropEstimated) return;
         ++round;
+        lastSamplingTime = now;
         if (round % 8 == 0) {
-            logger.info("Delta rate: {}", (lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated);
-            if (Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.03) {
+            logger.info("Delta rate: {}", (lastComputingRateEstimated - computingRateEstimated) / Math.max(lastComputingRateEstimated, 1));
+            if (lastComputingRateEstimated > 0 && Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.6) {
+                logger.info("cruise last time: {}", stopWatch.stop());
                 gain = 1;
                 probeProcessor.probe();
                 refreshSampling();
-                logger.info("cruise last time: {}", stopWatch.stop());
-                scheduledExecutorService.execute(sampleUpdater);
+                updateSample();
+                this.status = ConcurrentLimitStatus.PROBE;
+                //scheduledExecutorService.execute(sampleUpdater);
             } else {
-                RTPropEstimated = lastRTPropEstimated;
                 lastComputingRateEstimated = computingRateEstimated;
+                RTPropEstimated = RTSum / Math.max(RTCounter, 1);
                 computingRateEstimated = sum / Math.max(counter, 1);
                 sum = counter = 0;
+                RTSum = RTCounter = 0;
                 if (round % 24 == 0) {
-                    gain *= 1.25;
+                    gain *= lastComputingRateEstimated > 1 ? 1.25 : 0.75;
                 }
                 scheduledExecutorService.execute(this::startCruising);
             }
-        } else {
-            scheduledExecutorService.schedule(this::startCruising, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
         }
+//        else {
+//            scheduledExecutorService.schedule(this::startCruising, Math.round(RTPropEstimated * 1e3), TimeUnit.MICROSECONDS);
+//        }
 //        scheduledExecutorService.schedule(() -> {
 //            gain = 1;
 //            probeProcessor.probe();
@@ -201,7 +229,11 @@ public class ConcurrentLimitProcessor {
     }
 
     public void handleProbe(double RTT, double computingRate) {
-        lastRTPropEstimated = RTT;
+//        lastRTPropEstimated = RTT;
+//        if (!init) {
+//            this.initSchedule();
+//            this.init = true;
+//        }
 //        lastComputingRateEstimated = computingRate;
 //        long now = System.currentTimeMillis();
 //        if (!congestion && now - lastSamplingTime > getSamplingInterval()) {
@@ -228,8 +260,19 @@ public class ConcurrentLimitProcessor {
             computingRateEstimated = Math.max(computingRateEstimated, computingRate);
             sum += computingRate;
             ++counter;
-//            RTSum += RTT;
-//            ++RTCounter;
+            RTSum += RTT;
+            ++RTCounter;
+        }
+    }
+
+    public void onACK2(double RTT, double computingRate) {
+        this.handleProbe(RTT, computingRate);
+        switch (status) {
+            case CRUISING:
+                this.startCruising();
+                return;
+            case PROBE:
+                this.updateSample();
         }
     }
 
@@ -306,6 +349,7 @@ public class ConcurrentLimitProcessor {
     private enum ConcurrentLimitStatus {
         DRAIN,
         FILL_UP,
-        PROBE;
+        PROBE,
+        CRUISING
     }
 }

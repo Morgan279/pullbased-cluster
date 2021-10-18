@@ -1,18 +1,22 @@
 package com.aliware.tianchi.processor;
 
 import com.aliware.tianchi.entity.ProbeRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProbeProcessor {
 
-    private static final int UPPER_BOUND = 200;
+    private final static Logger LOGGER = LoggerFactory.getLogger(ProbeProcessor.class);
 
-    private static final int LOWER_BOUND = 30;
+    private static final int UPPER_BOUND = 180;
+
+    private static final int LOWER_BOUND = 10;
 
     private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
     private static final double[] RIGHT_GAIN_VALUES = {1, 1, 1, 1, 1, 1, 1, 1};
 
-    public double[] gains = LEFT_GAIN_VALUES;
+    public volatile double[] gains = LEFT_GAIN_VALUES;
 
     private int l = LOWER_BOUND;
 
@@ -57,7 +61,7 @@ public class ProbeProcessor {
 //            bound >>= 1;
 //            lastStatus = LastStatus.DRAIN;
 //        }
-
+//        LOGGER.info("l:{} r:{}", l, r);
         return r - l < 3;
     }
 
