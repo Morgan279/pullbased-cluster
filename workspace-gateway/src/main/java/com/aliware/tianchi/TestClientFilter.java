@@ -24,6 +24,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
+
+        virtualProvider.sampler.assign();
 //        if (virtualProvider.concurrentLimitProcessor.isDraining()) {
 //            throw new RpcException();
 //        }
@@ -63,6 +65,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             } else if (t.getMessage() == null || !t.getMessage().contains("LIMIT_EXCEEDED")) {
+                virtualProvider.sampler.onError();
                 virtualProvider.error.incrementAndGet();
                 if (virtualProvider.getErrorRatio() > 0.8) {
                     virtualProvider.waiting += 2;

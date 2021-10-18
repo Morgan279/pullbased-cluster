@@ -52,6 +52,8 @@ public class VirtualProvider {
 
     private final Predictor predictor;
 
+    public final Sampler sampler;
+
     public VirtualProvider(int port, int threads) {
         this.port = port;
         this.threads = threads;
@@ -61,7 +63,9 @@ public class VirtualProvider {
         this.inflight = new AtomicInteger(0);
         this.assigned = new AtomicInteger(1);
         this.error = new AtomicInteger(0);
-        this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads);
+        this.sampler = new Sampler();
+        this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads, sampler);
+        this.sampler.registerObserver(concurrentLimitProcessor);
         this.predictor = new Predictor();
 //        for (int i = 0, len = (int) (threads * 0.8); i < len; ++i) {
 //            Supervisor.workLoads.add(new WorkLoad(port, 2 + ThreadLocalRandom.current().nextDouble()));
@@ -109,10 +113,18 @@ public class VirtualProvider {
 
     private double varRtt = 0.5;
 
+    private volatile boolean init = false;
+
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
         double computingRate = (computed.get() - lastComputed) / RTT;
-        this.concurrentLimitProcessor.onACK2(RTT, computingRate);
+        if (!init) {
+            this.sampler.startSample();
+            init = true;
+        } else {
+            this.sampler.onComputed(computingRate);
+        }
+        //       this.concurrentLimitProcessor.onACK2(RTT, computingRate);
         this.predictor.update(RTT);
 //        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
 //        esRtt = 0.875 * esRtt + 0.125 * RTT;
