@@ -8,7 +8,7 @@ public class ProbeProcessor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ProbeProcessor.class);
 
-    private static final int UPPER_BOUND = 180;
+    private static final int UPPER_BOUND = 140;
 
     private static final int LOWER_BOUND = 10;
 
