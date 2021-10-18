@@ -161,11 +161,12 @@ public class ConcurrentLimitProcessor {
 
     private void updateSample() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime < RTPropEstimated) return;
+        if (now - lastSamplingTime < 2 * RTPropEstimated) return;
         lastSamplingTime = now;
         gain = probeProcessor.gains[round % probeProcessor.gains.length];
         if (round++ == probeProcessor.gains.length) {
             gain = 1;
+            refreshSampling();
             onConverge();
         }
     }
@@ -177,11 +178,12 @@ public class ConcurrentLimitProcessor {
             refreshSampling();
             this.status = ConcurrentLimitStatus.CRUISING;
             //startCruising();
-        } else {
-            refreshSampling();
-            updateSample();
-            //scheduledExecutorService.execute(sampleUpdater);
         }
+//        else {
+//            refreshSampling();
+//            updateSample();
+//            //scheduledExecutorService.execute(sampleUpdater);
+//        }
     }
 
     private final StopWatch stopWatch = new StopWatch();
@@ -193,7 +195,7 @@ public class ConcurrentLimitProcessor {
         lastSamplingTime = now;
         if (round % 8 == 0) {
             logger.info("Delta rate: {}", (lastComputingRateEstimated - computingRateEstimated) / Math.max(lastComputingRateEstimated, 1));
-            if (lastComputingRateEstimated > 0 && Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.6) {
+            if (lastComputingRateEstimated > 0 && Math.abs(lastComputingRateEstimated - computingRateEstimated) / lastComputingRateEstimated > 0.3) {
                 logger.info("cruise last time: {}", stopWatch.stop());
                 gain = 1;
                 probeProcessor.probe();
@@ -208,9 +210,9 @@ public class ConcurrentLimitProcessor {
                 sum = counter = 0;
                 RTSum = RTCounter = 0;
                 if (round % 24 == 0) {
-                    gain *= lastComputingRateEstimated > 1 ? 1.25 : 0.75;
+                    gain *= lastComputingRateEstimated - computingRateEstimated < 0 ? 1.1 : 0.9;
                 }
-                scheduledExecutorService.execute(this::startCruising);
+                //scheduledExecutorService.execute(this::startCruising);
             }
         }
 //        else {
