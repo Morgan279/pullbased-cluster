@@ -96,7 +96,7 @@ public class ConcurrentLimitProcessor implements Observer {
         switch (status) {
             case CRUISING:
                 ++round;
-                //logger.info("Delta rate: {}", deltaRate);
+                logger.info("Delta rate: {}", deltaRate);
                 if (Math.abs(deltaRate) > 0.15) {
                     logger.info("cruise last time: {}", stopWatch.stop());
                     gain = 1;

@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sampler implements Runnable {
 
-    public static final int SAMPLE_INTERVAL = 15;
+    public static final int SAMPLE_INTERVAL = 12;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Sampler.class);
 
@@ -94,8 +94,9 @@ public class Sampler implements Runnable {
     @Override
     public void run() {
         isSampling = false;
-        currentRate = Math.max(currentRate, (double) computed.get() / SAMPLE_INTERVAL);
-        LOGGER.info("rate: {} es: {}", (double) computed.get() / SAMPLE_INTERVAL, currentRate);
+        //currentRate = Math.max(currentRate, (double) computed.get() / SAMPLE_INTERVAL);
+        currentRate = (double) computed.get() / SAMPLE_INTERVAL;
+        LOGGER.info("rate: {} es: {} last: {}", (double) computed.get() / SAMPLE_INTERVAL, currentRate, lastRate);
         double deltaRate = lastRate == 0 ? 0 : (currentRate - lastRate) / lastRate;
         if (getErrorRatio() > 0.3) {
             startSample();
