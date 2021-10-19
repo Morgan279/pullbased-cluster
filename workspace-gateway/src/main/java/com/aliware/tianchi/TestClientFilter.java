@@ -25,7 +25,6 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int port = invoker.getUrl().getPort();
         VirtualProvider virtualProvider = Supervisor.getVirtualProvider(port);
 
-        virtualProvider.sampler.assign();
 //        if (virtualProvider.concurrentLimitProcessor.isDraining()) {
 //            throw new RpcException();
 //        }
@@ -56,6 +55,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
             virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
+            virtualProvider.sampler.assign();
 //            virtualProvider.inflight.decrementAndGet();
 //            double RTT = (System.nanoTime() - startTime) / 1e6;
             //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));

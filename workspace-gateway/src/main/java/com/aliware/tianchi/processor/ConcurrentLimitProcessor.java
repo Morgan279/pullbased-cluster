@@ -17,7 +17,7 @@ public class ConcurrentLimitProcessor implements Observer {
 
     private final static Logger logger = LoggerFactory.getLogger(ConcurrentLimitProcessor.class);
 
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(8, new NamedInternalThreadFactory("time-window", true));
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2, new NamedInternalThreadFactory("time-window", true));
 
     private static final long RW = Config.RT_TIME_WINDOW;
 
@@ -97,14 +97,14 @@ public class ConcurrentLimitProcessor implements Observer {
             case CRUISING:
                 ++round;
                 //logger.info("Delta rate: {}", deltaRate);
-                if (Math.abs(deltaRate) > 0.25) {
+                if (Math.abs(deltaRate) > 0.32) {
                     logger.info("cruise last time: {}", stopWatch.stop());
                     gain = 1;
                     round = 0;
                     probeProcessor.probe();
                     this.status = ConcurrentLimitStatus.PROBE;
                 } else if (round > 2) {
-                    gain *= deltaRate > 0 ? 1.1 : 0.9;
+                    gain *= deltaRate > 0 ? 1.25 : 0.75;
                 }
                 break;
 
@@ -114,7 +114,7 @@ public class ConcurrentLimitProcessor implements Observer {
                     this.status = ConcurrentLimitStatus.CRUISING;
                 } else if (probeProcessor.isProbingLeft()) {
                     gain = 0.8;
-                    scheduledExecutorService.schedule(() -> gain = 1,2, TimeUnit.MILLISECONDS);
+                    scheduledExecutorService.schedule(() -> gain = 1, 2500, TimeUnit.MICROSECONDS);
                 }
 
         }
