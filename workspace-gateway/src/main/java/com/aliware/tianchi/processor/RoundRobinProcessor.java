@@ -99,11 +99,13 @@ public class RoundRobinProcessor {
     public static <T> Invoker<T> selectMinRTTInvoker(List<Invoker<T>> invokers) {
         Invoker<T> minInv = null;
         double minRTT = Double.MAX_VALUE;
+        int puni = 1;
         for (Invoker<T> invoker : invokers) {
             VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
             if (virtualProvider.lastRTT < minRTT) {
                 minInv = invoker;
                 minRTT = virtualProvider.lastRTT;
+                virtualProvider.lastRTT = puni++;
             }
         }
 
