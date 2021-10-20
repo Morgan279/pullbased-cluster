@@ -115,8 +115,11 @@ public class VirtualProvider {
 
     private volatile boolean init = false;
 
+    public volatile double lastRTT = 1;
+
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+        lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
         if (!init) {
             this.sampler.startSample();

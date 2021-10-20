@@ -96,6 +96,20 @@ public class RoundRobinProcessor {
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
+    public static <T> Invoker<T> selectMinRTTInvoker(List<Invoker<T>> invokers) {
+        Invoker<T> minInv = null;
+        double minRTT = Double.MAX_VALUE;
+        for (Invoker<T> invoker : invokers) {
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            if (virtualProvider.lastRTT < minRTT) {
+                minInv = invoker;
+                minRTT = virtualProvider.lastRTT;
+            }
+        }
+
+        return minInv;
+    }
+
     public static <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
         int sumWeight = 0;
         boolean sameWeight = true;
@@ -123,7 +137,8 @@ public class RoundRobinProcessor {
             }
         }
 
+        return selectMinRTTInvoker(invokers);
         //return selectMaxWeight(invokers);
-        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 }
