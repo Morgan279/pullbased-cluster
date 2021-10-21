@@ -67,9 +67,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             } else if (t.getMessage() == null || !t.getMessage().contains("LIMIT_EXCEEDED")) {
                 virtualProvider.sampler.onError();
                 virtualProvider.error.incrementAndGet();
-                if (virtualProvider.getErrorRatio() > 0.95) {
-                    --virtualProvider.waiting;
-                } else if (virtualProvider.getErrorRatio() > 0.75) {
+//                if (virtualProvider.getErrorRatio() > 0.95) {
+//                    --virtualProvider.waiting;
+//                }
+                if (virtualProvider.getErrorRatio() > 0.75) {
                     virtualProvider.waiting += 2;
                 } else {
                     ++virtualProvider.waiting;
