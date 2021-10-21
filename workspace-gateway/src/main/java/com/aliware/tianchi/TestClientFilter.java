@@ -68,8 +68,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 virtualProvider.sampler.onError();
                 virtualProvider.error.incrementAndGet();
                 if (virtualProvider.getErrorRatio() > 0.95) {
-                    virtualProvider.waiting += 3;
-                } else if (virtualProvider.getErrorRatio() > 0.8) {
+                    --virtualProvider.waiting;
+                } else if (virtualProvider.getErrorRatio() > 0.75) {
                     virtualProvider.waiting += 2;
                 } else {
                     ++virtualProvider.waiting;
