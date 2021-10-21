@@ -94,6 +94,7 @@ public class VirtualProvider {
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        //return Math.round(predictor.getPrediction() * (2D + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()) * 10);
     }
 
@@ -115,14 +116,17 @@ public class VirtualProvider {
 
     private volatile boolean init = false;
 
+    public volatile double lastRTT = 1;
+
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+        lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
         if (!init) {
             this.sampler.startSample();
             init = true;
         } else {
-            this.sampler.onComputed(computingRate);
+            this.sampler.onComputed(computingRate, RTT);
         }
         //       this.concurrentLimitProcessor.onACK2(RTT, computingRate);
         this.predictor.update(RTT);

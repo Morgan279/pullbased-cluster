@@ -8,9 +8,9 @@ public class ProbeProcessor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ProbeProcessor.class);
 
-    private static final int UPPER_BOUND = 180;
+    private static final int UPPER_BOUND = 140;
 
-    private static final int LOWER_BOUND = 20;
+    private static final int LOWER_BOUND = 50;
 
     private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
@@ -62,12 +62,12 @@ public class ProbeProcessor {
 //            lastStatus = LastStatus.DRAIN;
 //        }
 //        LOGGER.info("l:{} r:{}", l, r);
-        return r - l < 3;
+        return r - l < 2;
     }
 
     public void probe() {
-        l = Math.max(l - 30, LOWER_BOUND);
-        r = Math.min(r + 30, UPPER_BOUND);
+        l = Math.max(l - 5, LOWER_BOUND);
+        r = Math.min(r + 5, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;

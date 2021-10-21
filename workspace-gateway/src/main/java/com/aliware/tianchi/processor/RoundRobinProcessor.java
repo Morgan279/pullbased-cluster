@@ -93,7 +93,25 @@ public class RoundRobinProcessor {
                 }
             }
         }
+
+        //return selectMinRTTInvoker(invokers);
         return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+    }
+
+    public static <T> Invoker<T> selectMinRTTInvoker(List<Invoker<T>> invokers) {
+        Invoker<T> minInv = null;
+        double minRTT = Double.MAX_VALUE;
+        //int puni = 1;
+        for (Invoker<T> invoker : invokers) {
+            VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+            if (virtualProvider.sampler.avgRTT < minRTT) {
+                minInv = invoker;
+                minRTT = virtualProvider.sampler.avgRTT;
+                //virtualProvider.lastRTT = puni++;
+            }
+        }
+
+        return minInv;
     }
 
     public static <T> Invoker<T> selectMinWaitingInvoker(List<Invoker<T>> invokers) {
@@ -111,7 +129,7 @@ public class RoundRobinProcessor {
             }
             lastWeight = virtualProvider.waiting;
         }
-//        LOGGER.info("waiting: {}", stringBuilder.toString());
+        LOGGER.info("waiting: {}", stringBuilder.toString());
         if (sumWeight > 3 && !sameWeight) {
             int offset = ThreadLocalRandom.current().nextInt(sumWeight << 1);
             for (Invoker<T> invoker : invokers) {
@@ -123,7 +141,8 @@ public class RoundRobinProcessor {
             }
         }
 
-        //return selectMaxWeight(invokers);
-        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        //return selectMinRTTInvoker(invokers);
+        return selectMaxWeight(invokers);
+        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 }
