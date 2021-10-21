@@ -62,12 +62,12 @@ public class ProbeProcessor {
 //            lastStatus = LastStatus.DRAIN;
 //        }
 //        LOGGER.info("l:{} r:{}", l, r);
-        return r - l < 3;
+        return r - l < 2;
     }
 
     public void probe() {
-        l = Math.max(l - 10, LOWER_BOUND);
-        r = Math.min(r + 10, UPPER_BOUND);
+        l = Math.max(l - 5, LOWER_BOUND);
+        r = Math.min(r + 5, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
