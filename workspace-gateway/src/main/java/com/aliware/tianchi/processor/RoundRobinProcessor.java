@@ -94,9 +94,8 @@ public class RoundRobinProcessor {
             }
         }
 
-        return Supervisor.lastReturned;
         //return selectMinRTTInvoker(invokers);
-        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
     }
 
     public static <T> Invoker<T> selectMinRTTInvoker(List<Invoker<T>> invokers) {
