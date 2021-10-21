@@ -66,8 +66,8 @@ public class ProbeProcessor {
     }
 
     public void probe() {
-        l = Math.max(l - 5, LOWER_BOUND);
-        r = Math.min(r + 5, UPPER_BOUND);
+        l = Math.max(l - 3, LOWER_BOUND);
+        r = Math.min(r + 3, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
