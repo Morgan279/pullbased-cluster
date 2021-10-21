@@ -53,6 +53,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         invocation.setAttachment(AttachmentKey.CONCURRENT_BOUND, String.valueOf(virtualProvider.concurrentLimitProcessor.getInflightBound()));
         long startTime = System.nanoTime();
         return invoker.invoke(invocation).whenCompleteWithContext((r, t) -> {
+            Supervisor.lastReturned = invoker;
             virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
             virtualProvider.sampler.assign();

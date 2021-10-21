@@ -18,12 +18,15 @@ public class Supervisor {
 
     public static final Map<Integer, VirtualProvider> virtualProviderMap = new ConcurrentHashMap<>();
 
+    public static Invoker lastReturned;
+
     public static <T> void registerProvider(Invoker<T> invoker) {
         int port = invoker.getUrl().getPort();
         int threads = Integer.parseInt(invoker.getUrl().getParameter(CommonConstants.THREADS_KEY, String.valueOf(CommonConstants.DEFAULT_THREADS)));
         virtualProviderMap.putIfAbsent(port, new VirtualProvider(port, threads));
         RoundRobinProcessor.register(port);
         LOGGER.info("register provider, port: " + port + " thread:" + threads);
+        lastReturned = invoker;
     }
 
     public static VirtualProvider getVirtualProvider(int port) {
