@@ -126,7 +126,7 @@ public class VirtualProvider {
             this.sampler.startSample();
             init = true;
         } else {
-            this.sampler.onComputed(computingRate);
+            this.sampler.onComputed(computingRate, RTT);
         }
         //       this.concurrentLimitProcessor.onACK2(RTT, computingRate);
         this.predictor.update(RTT);

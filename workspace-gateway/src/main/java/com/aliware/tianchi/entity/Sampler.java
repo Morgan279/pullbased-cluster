@@ -18,9 +18,15 @@ public class Sampler implements Runnable {
 
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedInternalThreadFactory("sample-timer", true));
 
-    public double lastRate = 0;
+    private double lastRate = 0;
 
-    public double currentRate = 0;
+    private double currentRate = 0;
+
+    public double avgRTT = 1;
+
+    private double RTTSum = 0;
+
+    public AtomicInteger RTTCount = new AtomicInteger();
 
     private final AtomicInteger assigned = new AtomicInteger();
 
@@ -46,15 +52,17 @@ public class Sampler implements Runnable {
         scheduledExecutorService.schedule(this, SAMPLE_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
-    public void onComputed(double rate) {
+    public void onComputed(double rate, double RTT) {
         if (!isSampling) {
             return;
         }
 
         computed.incrementAndGet();
+        RTTCount.incrementAndGet();
 //        LOGGER.info("computed: {}", computed.get());
         synchronized (this) {
-            currentRate = Math.max(currentRate, rate);
+            RTTSum += RTT;
+            //currentRate = Math.max(currentRate, rate);
         }
     }
 
@@ -86,8 +94,9 @@ public class Sampler implements Runnable {
         assigned.set(0);
         error.set(0);
         computed.set(0);
+        RTTCount.set(0);
         lastRate = currentRate;
-        currentRate = 0;
+        currentRate = RTTSum = 0;
     }
 
 
@@ -101,6 +110,7 @@ public class Sampler implements Runnable {
         if (getErrorRatio() > 0.3) {
             startSample();
         } else {
+            avgRTT = RTTSum / Math.max(1, RTTCount.get());
             observer.onSampleComplete(currentRate, deltaRate);
         }
     }
