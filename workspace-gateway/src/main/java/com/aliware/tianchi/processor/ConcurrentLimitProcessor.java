@@ -103,7 +103,7 @@ public class ConcurrentLimitProcessor implements Observer {
                     round = 0;
                     probeProcessor.probe();
                     this.status = ConcurrentLimitStatus.PROBE;
-                } else if (round > 2) {
+                } else if (round > 3) {
                     gain *= deltaRate > 0 ? 1.25 : 0.75;
                 }
                 break;
@@ -116,6 +116,7 @@ public class ConcurrentLimitProcessor implements Observer {
                     gain = 0.8;
                     scheduledExecutorService.schedule(() -> gain = 1, 2500, TimeUnit.MICROSECONDS);
                 }
+                break;
 
         }
         sampler.startSample();
