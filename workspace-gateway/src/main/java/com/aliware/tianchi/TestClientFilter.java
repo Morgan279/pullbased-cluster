@@ -45,8 +45,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        virtualProvider.inflight.incrementAndGet();
 //        virtualProvider.waiting.decrementAndGet();
         int lastComputed = virtualProvider.computed.get();
-
-        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, virtualProvider.getLatencyThreshold());
+        long threshold = virtualProvider.getLatencyThreshold();
+        RpcContext.getClientAttachment().setAttachment(CommonConstants.TIMEOUT_KEY, threshold);
 //        RpcContext.getClientAttachment().setObjectAttachment("timeout-countdown", TimeoutCountDown.newCountDown(virtualProvider.getLatencyThreshold(), TimeUnit.MILLISECONDS));
 
         //invocation.setAttachment(AttachmentKey.LATENCY_THRESHOLD, String.valueOf(virtualProvider.getLatencyThreshold()));
@@ -57,12 +57,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             virtualProvider.refreshErrorSampling();
             virtualProvider.assigned.incrementAndGet();
             virtualProvider.sampler.assign();
-//            virtualProvider.inflight.decrementAndGet();
-//            double RTT = (System.nanoTime() - startTime) / 1e6;
-            //virtualProvider.estimateInflight((virtualProvider.comingNum.get() - lastComing - (virtualProvider.computed.get() - lastComputed)));
-//            logger.info("RTT: {}", latency / 1e6);
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
+                LOGGER.info("RTT: {} predictor: {}", latency, threshold);
                 virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             } else if (t.getMessage() == null || !t.getMessage().contains("LIMIT_EXCEEDED")) {
