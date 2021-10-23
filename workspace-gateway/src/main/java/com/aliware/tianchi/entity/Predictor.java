@@ -34,7 +34,7 @@ public class Predictor {
     public void update(double RTT) {
         double[] tempWeights = new double[N];
         for (int i = 0; i < N; ++i) {
-            double l = predictions[i] > RTT ? 2 * predictions[i] : Math.pow(predictions[i] - RTT, 2);
+            double l = predictions[i] < RTT ? 2 * RTT : Math.pow(predictions[i] - RTT, 2);
             tempWeights[i] = weights[i] * Math.exp(-a * l);
         }
         double pool = 0;
