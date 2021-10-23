@@ -6,7 +6,7 @@ public class Predictor {
 
     private static final int N = 5000;
 
-    private static final double a = 2.4;
+    private static final double a = 2.8;
 
     private static final double b = 1;
 
