@@ -93,7 +93,7 @@ public class VirtualProvider {
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return (long) Math.ceil(esRtt);
+        return (long) Math.ceil(esRtt + 0.5);
         //return Math.round(sampler.avgRTT * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(predictor.getPrediction() * (2D + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()) * 10);
@@ -155,7 +155,7 @@ public class VirtualProvider {
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 5) {
+        if (now - lastSamplingTime > 10) {
             if (getErrorRatio() > 0.8) {
                 LOGGER.info("{} infer crash | error ratio: {}", port, getErrorRatio());
             }
