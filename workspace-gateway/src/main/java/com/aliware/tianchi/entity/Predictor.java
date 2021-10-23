@@ -34,7 +34,7 @@ public class Predictor {
     public void update(double RTT) {
         double[] tempWeights = new double[N];
         for (int i = 0; i < N; ++i) {
-            double l = predictions[i] < RTT ? 2 * RTT : Math.pow(predictions[i] - RTT, 2);
+            double l = predictions[i] > RTT ? 2 * predictions[i] : Math.pow(predictions[i] - RTT, 2);
             tempWeights[i] = weights[i] * Math.exp(-a * l);
         }
         double pool = 0;
@@ -42,9 +42,9 @@ public class Predictor {
             pool += b * tempWeights[i];
         }
         double c = 1 - b, d = pool / N;
-        for (int i = 0; i < N; ++i) {
-            weights[i] = c * tempWeights[i] + d;
-        }
+//        for (int i = 0; i < N; ++i) {
+//            weights[i] = c * tempWeights[i] + d;
+//        }
         synchronized (weights) {
             for (int i = 0; i < N; ++i) {
                 weights[i] = c * tempWeights[i] + d;

@@ -93,8 +93,8 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        //return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 4 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(sampler.avgRTT * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
+        //return Math.round(sampler.avgRTT * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(predictor.getPrediction() * (2D + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()) * 10);
     }
@@ -123,7 +123,7 @@ public class VirtualProvider {
         double RTT = latency / 1e6;
         varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
         esRtt = 0.875 * esRtt + 0.125 * RTT;
-        LOGGER.info("RTT: {} predictor: {} avg: {}, es: {}", latency / 1e6, getPredict(), sampler.avgRTT, esRtt);
+        LOGGER.info("RTT: {} timeout: {} predictor: {} avg: {}, es: {}", latency / 1e6, getLatencyThreshold(), predictor.getPrediction(), sampler.avgRTT, esRtt);
         lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
         if (!init) {
