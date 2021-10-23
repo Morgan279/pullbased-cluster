@@ -59,7 +59,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             virtualProvider.sampler.assign();
             if (t == null) {
                 long latency = System.nanoTime() - startTime;
-                LOGGER.info("RTT: {} predictor: {}", latency / 1e6, threshold);
+                //LOGGER.info("RTT: {} predictor: {}", latency / 1e6, threshold);
                 virtualProvider.computed.incrementAndGet();
                 virtualProvider.onComputed(latency, lastComputed);
             } else if (t.getMessage() == null || !t.getMessage().contains("LIMIT_EXCEEDED")) {
