@@ -84,12 +84,15 @@ public class RoundRobinProcessor {
         LOGGER.info("weights: {}", stringBuilder.toString());
 
         if (!sameWeight) {
-            int offset = ThreadLocalRandom.current().nextInt(sumWeight);
-            for (Invoker<T> invoker : invokers) {
-                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
-                offset -= virtualProvider.weight;
-                if (offset < 0) {
-                    return invoker;
+            while (true) {
+                int offset = ThreadLocalRandom.current().nextInt(sumWeight);
+                for (Invoker<T> invoker : invokers) {
+                    VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+                    offset -= virtualProvider.weight;
+                    if (offset < 0) {
+                        if (ThreadLocalRandom.current().nextDouble() < virtualProvider.getErrorRatio()) break;
+                        return invoker;
+                    }
                 }
             }
         }
