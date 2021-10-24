@@ -24,7 +24,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private final AtomicInteger concurrency = new AtomicInteger(0);
 
-    private final AtomicInteger computed = new AtomicInteger(0);
+    private final AtomicInteger counter = new AtomicInteger(0);
     //
     private final AtomicInteger waiting = new AtomicInteger(0);
 
@@ -57,8 +57,10 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
+        if ((counter.getAndIncrement() & 1) == 0) {
+            waiting.set(0);
+        }
         //appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
-        waiting.set(0);
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
     }
 

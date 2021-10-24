@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Predictor {
 
-    private static final int N = 5000;
+    private static final int N = 1000;
 
     private static final double a = 2;
 

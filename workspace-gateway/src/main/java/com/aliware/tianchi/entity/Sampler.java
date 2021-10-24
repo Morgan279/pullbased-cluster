@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sampler implements Runnable {
 
-    public static final int SAMPLE_INTERVAL = 8;
+    public static final int SAMPLE_INTERVAL = 12;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Sampler.class);
 

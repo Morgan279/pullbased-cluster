@@ -123,7 +123,7 @@ public class VirtualProvider {
         double RTT = latency / 1e6;
         varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
         esRtt = 0.875 * esRtt + 0.125 * RTT;
-        LOGGER.info("RTT: {} timeout: {} predictor: {} avg: {}, es: {}", latency / 1e6, getLatencyThreshold(), predictor.getPrediction(), sampler.avgRTT, esRtt);
+        LOGGER.info("RTT: {} timeout: {} predictor: {} avg: {}, es: {} var: {}", latency / 1e6, getLatencyThreshold(), predictor.getPrediction(), sampler.avgRTT, esRtt, varRtt);
         lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
         if (!init) {
@@ -155,7 +155,7 @@ public class VirtualProvider {
 
     public void refreshErrorSampling() {
         long now = System.currentTimeMillis();
-        if (now - lastSamplingTime > 10) {
+        if (now - lastSamplingTime > 12) {
             if (getErrorRatio() > 0.8) {
                 LOGGER.info("{} infer crash | error ratio: {}", port, getErrorRatio());
             }
