@@ -57,7 +57,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         //int bound = Integer.parseInt(invocation.getAttachment(AttachmentKey.CONCURRENT_BOUND));
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
-        if ((counter.getAndIncrement() & 1) == 0) {
+        if ((counter.getAndIncrement() % 3) == 0) {
             waiting.set(0);
         }
         //appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
