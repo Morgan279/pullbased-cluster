@@ -114,7 +114,7 @@ public class ConcurrentLimitProcessor implements Observer {
                     this.status = ConcurrentLimitStatus.CRUISING;
                 } else if (probeProcessor.isProbingLeft()) {
                     gain = 0.8;
-                    scheduledExecutorService.schedule(() -> gain = 1, 2000, TimeUnit.MICROSECONDS);
+                    scheduledExecutorService.schedule(() -> gain = 1, 3200, TimeUnit.MICROSECONDS);
                 }
                 break;
 

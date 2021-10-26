@@ -8,7 +8,7 @@ public class ProbeProcessor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ProbeProcessor.class);
 
-    private static final int UPPER_BOUND = 20;
+    private static final int UPPER_BOUND = 30;
 
     private static final int LOWER_BOUND = 180;
 
@@ -66,8 +66,8 @@ public class ProbeProcessor {
     }
 
     public void probe() {
-        l = Math.max(l - 5, LOWER_BOUND);
-        r = Math.min(r + 5, UPPER_BOUND);
+        l = Math.max(l - 4, LOWER_BOUND);
+        r = Math.min(r + 4, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
