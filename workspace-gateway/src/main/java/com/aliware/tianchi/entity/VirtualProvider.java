@@ -132,7 +132,7 @@ public class VirtualProvider {
             this.sampler.onComputed(computingRate, RTT);
         }
         //       this.concurrentLimitProcessor.onACK2(RTT, computingRate);
-        this.predictor.update(RTT);
+        //this.predictor.update(RTT);
 
 //        LOGGER.info("es: {} act:{} predic: {}", esRtt, RTT, predictor.getPrediction());
 //        if (RTT < 3) {
