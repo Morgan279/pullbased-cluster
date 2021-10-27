@@ -60,7 +60,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         appResponse.setAttachment(AttachmentKey.CONCURRENT, String.valueOf(concurrency.decrementAndGet()));
         appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(waiting.get()));
         long now = System.currentTimeMillis();
-        if (now - lastResetTime > 12) {
+        if (now - lastResetTime > 10) {
             waiting.set(0);
         }
 //        if ((counter.getAndIncrement() % 3) == 0) {
