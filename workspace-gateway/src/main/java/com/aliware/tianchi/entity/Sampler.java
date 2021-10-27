@@ -5,6 +5,8 @@ import org.apache.dubbo.common.threadlocal.NamedInternalThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sampler implements Runnable {
 
-    public static final int SAMPLE_INTERVAL = 14;
+    public static final int SAMPLE_INTERVAL = 12;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Sampler.class);
 
@@ -34,12 +36,12 @@ public class Sampler implements Runnable {
 
     private final AtomicInteger computed = new AtomicInteger();
 
-    private Observer observer;
+    private final List<Observer> observers = new ArrayList<>();
 
     private volatile boolean isSampling = false;
 
     public void registerObserver(Observer observer) {
-        this.observer = observer;
+        observers.add(observer);
     }
 
     public synchronized void startSample() {
@@ -99,6 +101,9 @@ public class Sampler implements Runnable {
         currentRate = RTTSum = 0;
     }
 
+    private void notifyObservers(double rate, double deltaRate, double avgRTT) {
+        observers.forEach(observer -> observer.onSampleComplete(rate, deltaRate, avgRTT));
+    }
 
     @Override
     public void run() {
@@ -111,7 +116,7 @@ public class Sampler implements Runnable {
             startSample();
         } else {
             avgRTT = RTTSum / Math.max(1, RTTCount.get());
-            observer.onSampleComplete(currentRate, deltaRate);
+            this.notifyObservers(currentRate, deltaRate, avgRTT);
         }
     }
 }

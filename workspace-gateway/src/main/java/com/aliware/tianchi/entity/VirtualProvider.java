@@ -3,6 +3,7 @@ package com.aliware.tianchi.entity;
 import com.aliware.tianchi.constant.Config;
 import com.aliware.tianchi.constant.Factors;
 import com.aliware.tianchi.processor.ConcurrentLimitProcessor;
+import io.netty.util.internal.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,9 @@ public class VirtualProvider {
         this.error = new AtomicInteger(0);
         this.sampler = new Sampler();
         this.concurrentLimitProcessor = new ConcurrentLimitProcessor(threads, sampler);
-        this.sampler.registerObserver(concurrentLimitProcessor);
         this.predictor = new Predictor();
+        this.sampler.registerObserver(concurrentLimitProcessor);
+        this.sampler.registerObserver(predictor);
 //        for (int i = 0, len = (int) (threads * 0.8); i < len; ++i) {
 //            Supervisor.workLoads.add(new WorkLoad(port, 2 + ThreadLocalRandom.current().nextDouble()));
 //        }
@@ -92,8 +94,9 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        //return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return (long) Math.ceil(esRtt + 0.5);
+        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(1.2, 2.2 + getConcurrencyRatio() - getErrorRatio()));
+        //LOGGER.info("prediction: {} avg: {}", predictor.getPrediction(), sampler.avgRTT);
+        //return (long) Math.ceil(esRtt + 0.5);
         //return Math.round(sampler.avgRTT * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(predictor.getPrediction() * (2D + getConcurrencyRatio() - getErrorRatio()));
         //return Math.round(ThreadLocalRandom.current().nextDouble(1, 2 + getConcurrencyRatio() - getErrorRatio()) * 10);
@@ -121,6 +124,7 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
+        this.predictor.update(RTT);
         varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
         esRtt = 0.875 * esRtt + 0.125 * RTT;
         lastRTT = RTT;
@@ -132,8 +136,6 @@ public class VirtualProvider {
             this.sampler.onComputed(computingRate, RTT);
         }
         //       this.concurrentLimitProcessor.onACK2(RTT, computingRate);
-        //this.predictor.update(RTT);
-
 //        LOGGER.info("es: {} act:{} predic: {}", esRtt, RTT, predictor.getPrediction());
 //        if (RTT < 3) {
 //            privilege.incrementAndGet();
