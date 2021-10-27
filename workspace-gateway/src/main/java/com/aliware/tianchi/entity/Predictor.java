@@ -72,7 +72,7 @@ public class Predictor implements Observer {
     @Override
     public void onSampleComplete(double rate, double deltaRate, double avgRTT) {
 //        Arrays.fill(weights, 1D / N);
-        if (counter.getAndIncrement() % 3 == 0) {
+        if (counter.getAndIncrement() % 100 == 0) {
             double roundRTT = Math.max(Math.round(avgRTT), 1);
             synchronized (weights) {
                 for (int i = 0; i < N; ++i) {
