@@ -26,7 +26,7 @@ public class Predictor implements Observer {
             predictions[i] = 1 + Math.round(5000 * Math.pow(2, (i - N) / 4D));
             //predictions[i] = i + 1;
         }
-        System.out.println("predictions: " + Arrays.toString(predictions));
+        //System.out.println("predictions: " + Arrays.toString(predictions));
         Arrays.fill(weights, 1D / N);
     }
 
