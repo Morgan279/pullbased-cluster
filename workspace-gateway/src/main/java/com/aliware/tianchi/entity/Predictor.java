@@ -23,7 +23,7 @@ public class Predictor implements Observer {
 
     public Predictor() {
         for (int i = 0; i < N; ++i) {
-            predictions[i] = 1 + Math.round(5000 * Math.pow(2, (i - N) / 7D));
+            predictions[i] = 1 + Math.round(5000 * Math.pow(2, (i - N) / 4D));
             //predictions[i] = i + 1;
         }
         System.out.println("predictions: " + Arrays.toString(predictions));
@@ -73,9 +73,11 @@ public class Predictor implements Observer {
     public void onSampleComplete(double rate, double deltaRate, double avgRTT) {
 //        Arrays.fill(weights, 1D / N);
         if (counter.getAndIncrement() % 3 == 0) {
+            double roundRTT = Math.max(Math.round(avgRTT), 1);
             synchronized (weights) {
                 for (int i = 0; i < N; ++i) {
-                    weights[i] = N / Math.exp(Math.pow(predictions[i] - avgRTT, 2));
+                    double l = predictions[i] > roundRTT ? 2 * roundRTT : Math.pow(predictions[i] - roundRTT, 2);
+                    weights[i] = Math.exp(-l);
                 }
             }
         }

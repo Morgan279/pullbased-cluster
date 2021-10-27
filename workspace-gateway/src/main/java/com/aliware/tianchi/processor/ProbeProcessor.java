@@ -62,7 +62,7 @@ public class ProbeProcessor {
 //            lastStatus = LastStatus.DRAIN;
 //        }
 //        LOGGER.info("l:{} r:{}", l, r);
-        return r - l < 2;
+        return r - l < 3;
     }
 
     public void probe() {
