@@ -109,7 +109,19 @@ public class RoundRobinProcessor {
         }
 
         //return selectMinRTTInvoker(invokers);
-        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        //return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
+        return selectMinError(invokers);
+    }
+
+    public static <T> Invoker<T> selectMinError(List<Invoker<T>> invokers) {
+        while (true) {
+            for (Invoker<T> invoker : invokers) {
+                VirtualProvider virtualProvider = Supervisor.getVirtualProvider(invoker.getUrl().getPort());
+                if (ThreadLocalRandom.current().nextDouble() > virtualProvider.getErrorRatio()) {
+                    return invoker;
+                }
+            }
+        }
     }
 
     public static <T> Invoker<T> selectMinRTTInvoker(List<Invoker<T>> invokers) {
