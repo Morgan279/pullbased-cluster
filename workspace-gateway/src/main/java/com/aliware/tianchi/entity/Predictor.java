@@ -75,7 +75,7 @@ public class Predictor implements Observer {
         if (counter.getAndIncrement() % 3 == 0) {
             synchronized (weights) {
                 for (int i = 0; i < N; ++i) {
-                    weights[i] = N / Math.exp(Math.abs(predictions[i] - avgRTT));
+                    weights[i] = N / Math.exp(Math.pow(predictions[i] - avgRTT, 2));
                 }
             }
         }
