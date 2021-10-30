@@ -94,7 +94,7 @@ public class VirtualProvider {
         //return (long) (Math.max(Math.sqrt(getPredict()), 1));
         //return Math.max((long) (this.averageRTT * 1.1), 7);
         //return (long) Math.ceil(esRtt + varRtt * ThreadLocalRandom.current().nextDouble(2, 3 + getConcurrencyRatio() - getErrorRatio()));
-        return Math.round(predictor.getPrediction() * ThreadLocalRandom.current().nextDouble(1.5, 2.5 + getConcurrencyRatio() - getErrorRatio()));
+        return Math.round(timeWindow.getMaxRTT() * ThreadLocalRandom.current().nextDouble(1.2, 2.2 + getConcurrencyRatio() - getErrorRatio()));
         //return (long) Math.ceil(predictor.getPrediction());
         //LOGGER.info("prediction: {} avg: {}", predictor.getPrediction(), sampler.avgRTT);
         //return (long) Math.ceil(esRtt + 0.5);
@@ -123,6 +123,8 @@ public class VirtualProvider {
 
     public volatile double lastRTT = 1;
 
+    private TimeWindow timeWindow = new TimeWindow();
+
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
         this.predictor.update(RTT);
@@ -130,6 +132,7 @@ public class VirtualProvider {
         esRtt = 0.875 * esRtt + 0.125 * RTT;
         lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
+        timeWindow.addNewSample(RTT);
         if (!init) {
             this.sampler.startSample();
             init = true;
