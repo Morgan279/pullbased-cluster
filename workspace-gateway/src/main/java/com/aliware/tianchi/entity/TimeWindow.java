@@ -16,6 +16,12 @@ public class TimeWindow {
 
     private Map<Double, Integer> indexMap = new ConcurrentHashMap<>();
 
+    public TimeWindow() {
+        for (int i = 0; i < WINDOW_SIZE; ++i) {
+            deque.add(100D);
+        }
+    }
+
     public void addNewSample(double RTT) {
         indexMap.put(RTT, counter.getAndIncrement());
         synchronized (deque) {

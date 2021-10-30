@@ -123,7 +123,7 @@ public class VirtualProvider {
 
     public volatile double lastRTT = 1;
 
-    private TimeWindow timeWindow = new TimeWindow();
+    private final TimeWindow timeWindow = new TimeWindow();
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
