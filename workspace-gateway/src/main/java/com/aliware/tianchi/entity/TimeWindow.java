@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeWindow {
 
-    private final int WINDOW_SIZE = 11;
+    private final int WINDOW_SIZE = 72;
 
     private final Deque<Double> deque = new ArrayDeque<>(WINDOW_SIZE + 1);
 

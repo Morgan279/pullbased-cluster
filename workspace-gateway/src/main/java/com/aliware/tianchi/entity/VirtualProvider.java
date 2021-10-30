@@ -127,10 +127,10 @@ public class VirtualProvider {
 
     public void onComputed(long latency, int lastComputed) {
         double RTT = latency / 1e6;
-        this.predictor.update(RTT);
-        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
-        esRtt = 0.875 * esRtt + 0.125 * RTT;
-        lastRTT = RTT;
+//        this.predictor.update(RTT);
+//        varRtt = 0.75 * varRtt + 0.25 * Math.abs(RTT - esRtt);
+//        esRtt = 0.875 * esRtt + 0.125 * RTT;
+//        lastRTT = RTT;
         double computingRate = (computed.get() - lastComputed) / RTT;
         timeWindow.addNewSample(RTT);
         if (!init) {
