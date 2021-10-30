@@ -8,9 +8,9 @@ public class ProbeProcessor {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ProbeProcessor.class);
 
-    private static final int UPPER_BOUND = 30;
+    private static final int UPPER_BOUND = 40;
 
-    private static final int LOWER_BOUND = 100;
+    private static final int LOWER_BOUND = 120;
 
     private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
