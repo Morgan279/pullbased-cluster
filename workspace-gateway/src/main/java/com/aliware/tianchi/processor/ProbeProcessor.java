@@ -10,7 +10,7 @@ public class ProbeProcessor {
 
     private static final int UPPER_BOUND = 30;
 
-    private static final int LOWER_BOUND = 150;
+    private static final int LOWER_BOUND = 100;
 
     private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
