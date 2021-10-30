@@ -7,16 +7,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeWindow {
 
-    private final int WINDOW_SIZE = 10;
+    private final int WINDOW_SIZE = 12;
 
     private final Deque<Double> deque = new ArrayDeque<>(WINDOW_SIZE);
 
-    private AtomicInteger counter = new AtomicInteger(0);
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     //private Map<Double, Integer> indexMap = new ConcurrentHashMap<>();
 
     public void addNewSample(double RTT) {
-        counter.getAndIncrement();
         //indexMap.put(RTT, counter.getAndIncrement());
         synchronized (deque) {
             while (!deque.isEmpty() && deque.peekLast() < RTT) {
@@ -27,6 +26,7 @@ public class TimeWindow {
             }
             deque.addLast(RTT);
         }
+        counter.getAndIncrement();
     }
 
     public Double getMaxRTT() {
