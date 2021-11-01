@@ -63,7 +63,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 //        if (now - lastResetTime > 48) {
 //            waiting.set(0);
 //        }
-        if ((counter.getAndIncrement() % 12) == 0) {
+        if ((counter.getAndIncrement() % 56) == 0) {
             waiting.set(0);
         }
         //appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
