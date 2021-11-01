@@ -64,7 +64,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 //            waiting.set(0);
 //        }
         if ((counter.getAndIncrement() % 12) == 0) {
-            waiting.set(0);
+            waiting.set(Math.max(waiting.get() - 12, 0));
         }
         //appResponse.setAttachment(AttachmentKey.EVALUATE_WEIGHT, String.valueOf(Math.round(evaluator.getEvaluate() * Factors.EVALUATE_FACTOR)));
         //appResponse.setAttachment(AttachmentKey.REMAIN_THREAD, String.valueOf(bound - concurrency.get()));
