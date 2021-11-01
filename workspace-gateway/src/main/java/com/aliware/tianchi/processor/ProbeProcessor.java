@@ -10,7 +10,7 @@ public class ProbeProcessor {
 
     private static final int UPPER_BOUND = 120;
 
-    private static final int LOWER_BOUND = 60;
+    private static final int LOWER_BOUND = 50;
 
     private static final double[] LEFT_GAIN_VALUES = {0.75, 1, 1, 1, 1, 1, 1, 1};
 
@@ -62,12 +62,12 @@ public class ProbeProcessor {
 //            lastStatus = LastStatus.DRAIN;
 //        }
 //        LOGGER.info("l:{} r:{}", l, r);
-        return r - l < 3;
+        return r - l < 2;
     }
 
     public void probe() {
-        l = Math.max(l - 3, LOWER_BOUND);
-        r = Math.min(r + 3, UPPER_BOUND);
+        l = Math.max(l - 2, LOWER_BOUND);
+        r = Math.min(r + 2, UPPER_BOUND);
 //        l = LOWER_BOUND;
 //        r = UPPER_BOUND;
         bound = left.bound = l + (r - l + 1) / 3;
